@@ -1,20 +1,18 @@
-import api from "./api";
+import { apiGet } from "../lib/api";
 import type { AnalyticsSummary, RankingAnalytics } from "../types/analytics";
 
 export async function fetchAnalyticsSummary(
   studentId: string
 ): Promise<AnalyticsSummary> {
-  const { data } = await api.get<AnalyticsSummary>(
+  return apiGet(
     `/api/analytics/summary/${studentId}`
-  );
-  return data;
+  ) as Promise<AnalyticsSummary>;
 }
 
 export async function fetchAnalyticsRanking(
   studentId: string
 ): Promise<RankingAnalytics> {
-  const { data } = await api.get<RankingAnalytics>(
+  return apiGet(
     `/api/analytics/ranking/${studentId}`
-  );
-  return data;
+  ) as Promise<RankingAnalytics>;
 }

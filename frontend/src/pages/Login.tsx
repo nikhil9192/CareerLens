@@ -2,7 +2,8 @@ import { useState, FormEvent, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PasswordInput, { fieldClass, labelClass, buttonClass } from "../components/PasswordInput";
 import { login } from "../services/auth.api";
-import { setAuthToken, setStudentId } from "../services/auth";
+import { setStudentId } from "../services/auth";
+import { TOKEN_KEY } from "../lib/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function Login() {
 
     try {
       const data = await login({ email: email.trim(), password });
-      setAuthToken(data.token);
+      localStorage.setItem(TOKEN_KEY, data.token);
       setStudentId(data.student.id);
       navigate("/dashboard");
     } catch (err: unknown) {

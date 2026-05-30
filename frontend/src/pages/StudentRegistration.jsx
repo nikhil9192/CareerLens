@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { apiPost } from "../lib/api";
 
 const INITIAL_FORM = {
   name: "",
@@ -50,10 +50,10 @@ export default function StudentRegistration() {
     const { confirm_password, ...payload } = form;
 
     try {
-      const { data } = await api.post("/api/students", payload);
+      const data = await apiPost("/api/students", payload);
       localStorage.setItem("student_id", data.student.id);
       if (data.token) {
-        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("careerlens_token", data.token);
       }
       setSuccess(`Registration successful! Welcome, ${data.student.name}.`);
       setForm(INITIAL_FORM);

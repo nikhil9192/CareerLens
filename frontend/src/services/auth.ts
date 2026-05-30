@@ -1,4 +1,5 @@
-const TOKEN_KEY = "careerlens_token";
+import { TOKEN_KEY } from "../lib/api";
+
 const STUDENT_ID_KEY = "student_id";
 
 export function getAuthToken(): string | null {

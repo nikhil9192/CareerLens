@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import { apiPost } from "../lib/api";
 
 const EXAM_TERMS = ["Term1", "Term2", "Final"];
 
@@ -66,7 +66,7 @@ export default function MarksEntry() {
     }));
 
     try {
-      const { data } = await api.post("/api/marks", {
+      const data = await apiPost("/api/marks", {
         student_id: studentId,
         exam_term: examTerm,
         subjects,

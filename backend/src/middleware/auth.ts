@@ -27,12 +27,12 @@ export function authMiddleware(
 ): void {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith("Bearer ")) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ error: "Unauthorized: missing or invalid token" });
     return;
   }
 
-  const token = authHeader.slice(7);
+  const token = authHeader.split(" ")[1];
   const secret = process.env.JWT_SECRET;
 
   if (!secret) {

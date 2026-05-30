@@ -1,4 +1,4 @@
-import api from "./api";
+import { apiGet, apiPost } from "../lib/api";
 
 export interface RegisterPayload {
   name: string;
@@ -41,14 +41,13 @@ export interface LoginResponse {
 export async function register(
   payload: RegisterPayload
 ): Promise<RegisterResponse> {
-  const { data } = await api.post<RegisterResponse>(
-    "/api/auth/register",
-    payload
-  );
-  return data;
+  return apiPost("/api/auth/register", payload) as Promise<RegisterResponse>;
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
-  const { data } = await api.post<LoginResponse>("/api/auth/login", payload);
-  return data;
+  return apiPost("/api/auth/login", payload) as Promise<LoginResponse>;
+}
+
+export async function fetchMe() {
+  return apiGet("/api/auth/me");
 }

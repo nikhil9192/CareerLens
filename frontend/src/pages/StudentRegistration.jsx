@@ -9,6 +9,8 @@ const INITIAL_FORM = {
   mobile: "",
   gender: "",
   medium: "",
+  password: "",
+  confirm_password: "",
 };
 
 const CLASS_OPTIONS = ["6", "7", "8", "9", "10", "11", "12"];
@@ -33,9 +35,26 @@ export default function StudentRegistration() {
     setSuccess("");
     setError("");
 
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      setLoading(false);
+      return;
+    }
+
+    if (form.password !== form.confirm_password) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    const { confirm_password, ...payload } = form;
+
     try {
-      const { data } = await api.post("/api/students", form);
+      const { data } = await api.post("/api/students", payload);
       localStorage.setItem("student_id", data.student.id);
+      if (data.token) {
+        localStorage.setItem("auth_token", data.token);
+      }
       setSuccess(`Registration successful! Welcome, ${data.student.name}.`);
       setForm(INITIAL_FORM);
       navigate("/marks");
@@ -189,6 +208,40 @@ export default function StudentRegistration() {
                 <option value="Hindi">Hindi</option>
                 <option value="English">English</option>
               </select>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                value={form.password}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                placeholder="Create a password (min 6 characters)"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirm_password" className="mb-1 block text-sm font-medium text-slate-700">
+                Re-enter Password
+              </label>
+              <input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                required
+                minLength={6}
+                value={form.confirm_password}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                placeholder="Re-enter your password"
+              />
             </div>
 
             <button

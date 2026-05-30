@@ -1,8 +1,6 @@
 {
-  "watch": ["server.js", "routes", "controllers", "middleware", "config"],
-  "ext": "js,json",
-  "ignore": ["node_modules"],
-  "delay": 500,
-  "signal": "SIGTERM",
-  "exec": "node server.js"
+  "watch": ["src"],
+  "ext": "ts,json",
+  "ignore": ["node_modules", "dist"],
+  "exec": "tsx src/index.ts"
 }

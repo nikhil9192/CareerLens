@@ -4,6 +4,10 @@
 ALTER TABLE students
   ADD COLUMN IF NOT EXISTS school_name TEXT;
 
+-- Password hash for student login
+ALTER TABLE students
+  ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
 -- Allow the API (anon key) to insert and read students
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 

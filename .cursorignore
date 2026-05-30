@@ -1,0 +1,16 @@
+Set-Content .cursorignore @"
+node_modules/
+.next/
+dist/
+build/
+.env
+.env.*
+*.log
+*.pem
+prisma/migrations/
+public/images/
+public/videos/
+coverage/
+uploads/
+*.sqlite
+"@

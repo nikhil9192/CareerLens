@@ -11,9 +11,15 @@ import { AppError } from "./lib/errors";
 const app = express();
 const PORT = Number(process.env.PORT) || 8000;
 
+const allowedOrigins = [
+  "https://career-lens-ivory.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: allowedOrigins,
     credentials: true,
   })
 );

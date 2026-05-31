@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../config/supabase";
+import { supabase } from "../lib/supabase";
 
 export async function getSchools(
   _req: Request,

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { supabase } from "../config/supabase";
+import { supabase } from "../lib/supabase";
 import { registerSchema, loginSchema } from "../schemas/auth.schema";
 import { AppError } from "../lib/errors";
 import { AuthRequest } from "../middleware/auth";

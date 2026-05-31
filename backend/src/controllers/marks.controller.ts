@@ -1,5 +1,5 @@
 import { Response, NextFunction } from "express";
-import { supabase } from "../config/supabase";
+import { supabase } from "../lib/supabase";
 import { AuthRequest } from "../middleware/auth";
 import { AppError } from "../lib/errors";
 

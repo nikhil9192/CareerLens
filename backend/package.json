@@ -8,10 +8,7 @@
     "start": "node dist/index.js",
     "predev": "node scripts/free-port.js",
     "dev": "tsx watch src/index.ts",
-    "prestart": "node scripts/free-port.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev"
+    "prestart": "node scripts/free-port.js"
   },
   "keywords": [
     "careerlens",
@@ -19,7 +16,6 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.5.0",
     "@supabase/supabase-js": "^2.49.1",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -36,7 +32,6 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.10",
     "nodemon": "^3.1.14",
-    "prisma": "^6.5.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   }

@@ -1,6 +1,6 @@
 import NodeCache from "node-cache";
-import { prisma } from "../lib/prisma";
-import { NotFoundError } from "../lib/errors";
+import { supabase } from "../lib/supabase";
+import { AppError, NotFoundError } from "../lib/errors";
 
 const rankingCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
@@ -30,12 +30,13 @@ function weightedGpa(marks: { marks: number; totalMarks: number }[]): number {
 }
 
 async function getStudentOrThrow(studentId: string) {
-  const student = await prisma.student.findUnique({
-    where: { id: studentId },
-    select: { id: true, batch: true },
-  });
+  const { data: student, error } = await supabase
+    .from("students")
+    .select("id, school_id, class_grade")
+    .eq("id", studentId)
+    .single();
 
-  if (!student) {
+  if (error || !student) {
     throw new NotFoundError("Student not found");
   }
 
@@ -45,22 +46,32 @@ async function getStudentOrThrow(studentId: string) {
 export async function getGpaAnalytics(studentId: string) {
   await getStudentOrThrow(studentId);
 
-  const marks = await prisma.mark.findMany({
-    where: { studentId },
-    select: { semester: true, marks: true, totalMarks: true },
-    orderBy: { semester: "asc" },
-  });
+  const { data: marks, error } = await supabase
+    .from("marks")
+    .select("exam_term, marks, total_marks")
+    .eq("student_id", studentId)
+    .order("exam_term", { ascending: true });
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
 
   const semesterMap = new Map<
     string,
     { marks: number; totalMarks: number }[]
   >();
 
-  for (const mark of marks) {
-    const existing = semesterMap.get(mark.semester) ?? [];
-    existing.push({ marks: mark.marks, totalMarks: mark.totalMarks });
-    semesterMap.set(mark.semester, existing);
+  for (const mark of marks ?? []) {
+    const term = mark.exam_term;
+    const existing = semesterMap.get(term) ?? [];
+    existing.push({ marks: mark.marks, totalMarks: mark.total_marks });
+    semesterMap.set(term, existing);
   }
+
+  const normalizedMarks = (marks ?? []).map((mark) => ({
+    marks: mark.marks,
+    totalMarks: mark.total_marks,
+  }));
 
   const semesterBreakdown = Array.from(semesterMap.entries()).map(
     ([semester, semesterMarks]) => ({
@@ -70,7 +81,7 @@ export async function getGpaAnalytics(studentId: string) {
     })
   );
 
-  const overallGpa = weightedGpa(marks);
+  const overallGpa = weightedGpa(normalizedMarks);
 
   let trend: "up" | "down" | "stable" = "stable";
   let change = 0;
@@ -90,22 +101,26 @@ export async function getGpaAnalytics(studentId: string) {
 export async function getSubjectAnalytics(studentId: string) {
   await getStudentOrThrow(studentId);
 
-  const marks = await prisma.mark.findMany({
-    where: { studentId },
-    include: { subject: { select: { name: true } } },
-  });
+  const { data: marks, error } = await supabase
+    .from("marks")
+    .select("subject, marks, total_marks")
+    .eq("student_id", studentId);
+
+  if (error) {
+    throw new AppError(error.message, 500);
+  }
 
   const subjectScores = new Map<string, { total: number; count: number }>();
 
-  for (const mark of marks) {
-    const score = (mark.marks / mark.totalMarks) * 100;
-    const existing = subjectScores.get(mark.subject.name) ?? {
+  for (const mark of marks ?? []) {
+    const score = (mark.marks / mark.total_marks) * 100;
+    const existing = subjectScores.get(mark.subject) ?? {
       total: 0,
       count: 0,
     };
     existing.total += score;
     existing.count += 1;
-    subjectScores.set(mark.subject.name, existing);
+    subjectScores.set(mark.subject, existing);
   }
 
   const all = Array.from(subjectScores.entries())
@@ -134,20 +149,39 @@ export async function getSubjectAnalytics(studentId: string) {
   };
 }
 
-async function computeRanking(studentId: string, batch: string) {
-  const students = await prisma.student.findMany({
-    where: { batch },
-    select: { id: true },
-  });
+async function computeRanking(
+  studentId: string,
+  schoolId: string,
+  classGrade: string
+) {
+  const { data: students, error: studentsError } = await supabase
+    .from("students")
+    .select("id")
+    .eq("school_id", schoolId)
+    .eq("class_grade", classGrade);
+
+  if (studentsError) {
+    throw new AppError(studentsError.message, 500);
+  }
 
   const gpaList: { id: string; gpa: number }[] = [];
 
-  for (const student of students) {
-    const marks = await prisma.mark.findMany({
-      where: { studentId: student.id },
-      select: { marks: true, totalMarks: true },
-    });
-    gpaList.push({ id: student.id, gpa: weightedGpa(marks) });
+  for (const student of students ?? []) {
+    const { data: marks, error: marksError } = await supabase
+      .from("marks")
+      .select("marks, total_marks")
+      .eq("student_id", student.id);
+
+    if (marksError) {
+      throw new AppError(marksError.message, 500);
+    }
+
+    const normalizedMarks = (marks ?? []).map((mark) => ({
+      marks: mark.marks,
+      totalMarks: mark.total_marks,
+    }));
+
+    gpaList.push({ id: student.id, gpa: weightedGpa(normalizedMarks) });
   }
 
   gpaList.sort((a, b) => b.gpa - a.gpa);
@@ -159,6 +193,8 @@ async function computeRanking(studentId: string, batch: string) {
     totalStudents > 0
       ? Math.round(((totalStudents - rank + 1) / totalStudents) * 10000) / 100
       : 0;
+
+  const batch = `Class ${classGrade}`;
 
   return { rank, totalStudents, percentile, batch };
 }
@@ -178,7 +214,11 @@ export async function getRankingAnalytics(studentId: string) {
     return cached;
   }
 
-  const result = await computeRanking(studentId, student.batch);
+  const result = await computeRanking(
+    studentId,
+    student.school_id,
+    student.class_grade
+  );
   rankingCache.set(cacheKey, result);
   return result;
 }

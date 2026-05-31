@@ -20,6 +20,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: false,
   },
   realtime: {
-    transport: ws,
+    // ws transport required on Node < 22
+    transport: ws as never,
   },
 });

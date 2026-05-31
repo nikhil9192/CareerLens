@@ -1,21 +1,25 @@
-import dotenv from 'dotenv'
-dotenv.config()
-import { createClient } from '@supabase/supabase-js'
-import WebSocket from 'ws'
+import dotenv from "dotenv";
+dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
-if (!supabaseUrl) throw new Error('SUPABASE_URL is missing')
-if (!supabaseKey) throw new Error('SUPABASE_SERVICE_KEY is missing')
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl) {
+  throw new Error("SUPABASE_URL is missing from environment");
+}
+if (!supabaseKey) {
+  throw new Error("SUPABASE_SERVICE_KEY is missing from environment");
+}
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
-  global: {
-    // @ts-ignore
-    WebSocket: WebSocket
-  },
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
-})
+    persistSession: false,
+  },
+  realtime: {
+    transport: ws,
+  },
+});

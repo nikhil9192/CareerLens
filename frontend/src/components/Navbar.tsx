@@ -1,111 +1,145 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { isAuthenticated, logout } from "../services/auth";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", shortLabel: "Home", icon: "🏠" },
-  { to: "/marks", label: "Enter Marks", shortLabel: "Marks", icon: "📝" },
-  { to: "/career-quiz", label: "Career Quiz", shortLabel: "Quiz", icon: "🎯" },
+  { to: "/dashboard", label: "Dashboard", icon: "🏠" },
+  { to: "/marks", label: "Enter Marks", icon: "📝" },
+  { to: "/career-quiz", label: "Career Quiz", icon: "🎯" },
 ];
 
-function navLinkClass(isActive: boolean, variant: "desktop" | "mobile"): string {
+function desktopLinkClass(isActive: boolean): string {
   const base =
-    variant === "desktop"
-      ? "relative rounded-lg px-3 py-2 text-sm font-medium transition"
-      : "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium transition";
-
+    "relative rounded-lg px-3 py-2 text-sm font-medium transition";
   if (isActive) {
     return `${base} text-[var(--accent-cyan)]`;
   }
   return `${base} text-[var(--text-secondary)] hover:text-[var(--accent-cyan)]`;
 }
 
+function mobileMenuLinkClass(isActive: boolean): string {
+  const base =
+    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition";
+  if (isActive) {
+    return `${base} bg-[rgba(0,212,255,0.1)] text-[var(--accent-cyan)]`;
+  }
+  return `${base} text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--accent-cyan)]`;
+}
+
 export default function Navbar() {
   const navigate = useNavigate();
-  useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (!isAuthenticated()) {
     return null;
   }
 
   function handleLogout() {
+    setMenuOpen(false);
     logout();
     navigate("/");
   }
 
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
   return (
-    <>
-      <nav
-        className="sticky top-0 z-50 hidden border-b md:block"
-        style={{
-          background: "var(--navbar-bg)",
-          borderColor: "var(--border)",
-        }}
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <NavLink to="/dashboard" className="gradient-text text-lg font-bold">
-            CareerLens
-          </NavLink>
+    <nav
+      className="sticky top-0 z-50 border-b"
+      style={{
+        background: "var(--navbar-bg)",
+        borderColor: "var(--border)",
+      }}
+    >
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <NavLink
+          to="/dashboard"
+          className="gradient-text text-base font-bold sm:text-lg"
+          onClick={closeMenu}
+        >
+          CareerLens
+        </NavLink>
 
-          <div className="flex items-center gap-1">
-            {NAV_ITEMS.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) => navLinkClass(isActive, "desktop")}
-              >
-                {({ isActive }) => (
-                  <>
-                    {item.icon} {item.label}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--accent-cyan)]" />
-                    )}
-                  </>
-                )}
-              </NavLink>
-            ))}
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="ml-2 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--error)]"
-            >
-              🚪 Logout
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden"
-        style={{
-          background: "var(--navbar-bg)",
-          borderColor: "var(--border)",
-        }}
-      >
-        <div className="flex items-stretch justify-around px-1">
+        <div className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => navLinkClass(isActive, "mobile")}
+              className={({ isActive }) => desktopLinkClass(isActive)}
             >
-              <span className="text-lg" aria-hidden="true">
-                {item.icon}
-              </span>
-              <span>{item.shortLabel}</span>
+              {({ isActive }) => (
+                <>
+                  {item.icon} {item.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-[var(--accent-cyan)]" />
+                  )}
+                </>
+              )}
             </NavLink>
           ))}
           <button
             type="button"
             onClick={handleLogout}
-            className="flex flex-1 flex-col items-center gap-0.5 py-2 text-xs font-medium text-[var(--text-secondary)] transition hover:text-[var(--error)]"
+            className="ml-2 rounded-lg px-3 py-2 text-sm font-medium text-[var(--text-secondary)] transition hover:text-[var(--error)]"
           >
-            <span className="text-lg" aria-hidden="true">
-              🚪
-            </span>
-            <span>Logout</span>
+            🚪 Logout
           </button>
         </div>
-      </nav>
-    </>
+
+        <button
+          type="button"
+          className="rounded-lg p-2 text-xl text-[var(--text-primary)] transition hover:bg-[var(--bg-card-hover)] md:hidden"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          {menuOpen ? "✕" : "☰"}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div
+          className="border-t md:hidden"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <div className="mx-auto max-w-5xl space-y-1 px-2 py-2">
+            {NAV_ITEMS.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => mobileMenuLinkClass(isActive)}
+                onClick={closeMenu}
+              >
+                <span className="text-lg" aria-hidden="true">
+                  {item.icon}
+                </span>
+                <span className="md:inline">{item.label}</span>
+              </NavLink>
+            ))}
+            <NavLink
+              to="/profile"
+              className={({ isActive }) => mobileMenuLinkClass(isActive)}
+              onClick={closeMenu}
+            >
+              <span className="text-lg" aria-hidden="true">
+                👤
+              </span>
+              <span>Profile</span>
+            </NavLink>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-medium text-[var(--error)] transition hover:bg-[var(--color-error-bg)]"
+            >
+              <span className="text-lg" aria-hidden="true">
+                🚪
+              </span>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </nav>
   );
 }

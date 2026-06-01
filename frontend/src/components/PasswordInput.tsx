@@ -85,4 +85,4 @@ export const labelClass =
   "mb-1 block text-sm font-medium text-[var(--text-secondary)]";
 
 export const buttonClass =
-  "btn-primary w-full py-3 font-semibold disabled:cursor-not-allowed";
+  "btn-primary w-full py-3 font-semibold disabled:cursor-not-allowed md:w-auto md:min-w-[12rem]";

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root {
   --bg-primary: #0a0f1e;
   --bg-card: #111827;
@@ -33,7 +39,10 @@
   --navbar-bg: #0d1117;
 }
 
-html {
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
   overscroll-behavior-x: none;
 }
@@ -44,15 +53,20 @@ body {
   font-weight: 400;
   background: #0a0f1e;
   color: #f9fafb;
-  overflow-x: hidden;
   overflow-y: auto;
-  overscroll-behavior-x: none;
   touch-action: pan-y pinch-zoom;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 #root {
   overflow-x: hidden;
   min-height: 100vh;
+  width: 100%;
 }
 
 .gradient-text {

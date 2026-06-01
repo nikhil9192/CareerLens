@@ -92,8 +92,8 @@ export default function MarksEntry() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-8">
-      <div className="mx-auto w-full max-w-[480px]">
+    <div className="min-h-screen w-full bg-[var(--color-bg)] px-4 py-6 md:py-8">
+      <div className="mx-auto w-full max-w-md">
         <button
           type="button"
           onClick={() => navigate("/dashboard")}
@@ -102,8 +102,8 @@ export default function MarksEntry() {
           ← Back to Dashboard
         </button>
 
-        <div className="auth-card p-6">
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">Enter Your Marks</h1>
+        <div className="auth-card w-full p-4 md:p-6">
+          <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">Enter Your Marks</h1>
 
           {success && (
             <div
@@ -125,7 +125,7 @@ export default function MarksEntry() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:flex md:flex-col">
             <div>
               <label
                 htmlFor="exam_term"
@@ -188,7 +188,7 @@ export default function MarksEntry() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary flex w-full items-center justify-center gap-2 py-3 font-semibold disabled:cursor-not-allowed"
+              className="btn-primary flex w-full items-center justify-center gap-2 py-3 font-semibold disabled:cursor-not-allowed md:ml-auto md:w-auto md:min-w-[12rem]"
             >
               {loading ? (
                 <>

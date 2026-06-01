@@ -11,6 +11,7 @@ import CareerResults from "./pages/CareerResults";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import BottomNav from "./components/BottomNav";
 import { isAuthenticated } from "./services/auth";
 
 const queryClient = new QueryClient({
@@ -29,7 +30,8 @@ function AppLayout() {
   return (
     <>
       <Navbar />
-      <div className={loggedIn ? "pb-20 md:pb-0" : undefined}>
+      <BottomNav />
+      <div className={loggedIn ? "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0" : undefined}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />

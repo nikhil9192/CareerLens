@@ -22,14 +22,14 @@ export default function SemesterLineChart({
   }));
 
   return (
-    <div className="card chart-glow chart-enter p-6">
-      <h2 className="text-lg font-bold text-[var(--color-text)]">
+    <div className="card chart-glow chart-enter p-4 md:p-6">
+      <h2 className="text-base font-bold text-[var(--color-text)] md:text-lg">
         GPA Trend
       </h2>
-      <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+      <p className="mt-1 text-xs text-[var(--color-text-muted)] md:text-sm">
         Performance across semesters
       </p>
-      <div className="mt-4 h-64">
+      <div className="mt-4 h-[200px] lg:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={data}

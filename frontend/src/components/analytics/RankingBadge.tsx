@@ -12,11 +12,11 @@ export default function RankingBadge({ data }: RankingBadgeProps) {
     circumference - (ringPercent / 100) * circumference;
 
   return (
-    <div className="card chart-enter flex flex-col items-center p-6">
-      <h2 className="text-lg font-bold text-[var(--color-text)]">
+    <div className="card chart-enter flex flex-col items-center p-4 md:p-6">
+      <h2 className="text-base font-bold text-[var(--color-text)] md:text-lg">
         Batch Ranking
       </h2>
-      <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+      <p className="mt-1 text-xs text-[var(--color-text-muted)] md:text-sm">
         {data.batch}
       </p>
 

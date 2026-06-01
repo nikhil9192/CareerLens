@@ -28,14 +28,14 @@ export default function SubjectBarChart({ subjects }: SubjectBarChartProps) {
   }));
 
   return (
-    <div className="card chart-glow chart-enter p-6">
-      <h2 className="text-lg font-bold text-[var(--color-text)]">
+    <div className="card chart-glow chart-enter p-4 md:p-6">
+      <h2 className="text-base font-bold text-[var(--color-text)] md:text-lg">
         Subject Performance
       </h2>
-      <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+      <p className="mt-1 text-xs text-[var(--color-text-muted)] md:text-sm">
         Scores by subject
       </p>
-      <div className="mt-4 h-64">
+      <div className="mt-4 h-[200px] lg:h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -55,8 +55,8 @@ export default function SubjectBarChart({ subjects }: SubjectBarChartProps) {
             <YAxis
               type="category"
               dataKey="name"
-              width={100}
-              tick={{ fill: "var(--color-text-muted)", fontSize: 12 }}
+              width={72}
+              tick={{ fill: "var(--color-text-muted)", fontSize: 11 }}
             />
             <Tooltip
               contentStyle={{

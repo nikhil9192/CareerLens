@@ -21,13 +21,39 @@ function CardShell({
   children: ReactNode;
 }) {
   return (
-    <div className="card p-6">
+    <div className="card p-4 md:p-6">
       {title && (
-        <h2 className="mb-4 text-lg font-bold text-[var(--color-text)]">
+        <h2 className="mb-3 text-base font-bold text-[var(--color-text)] md:mb-4 md:text-lg">
           {title}
         </h2>
       )}
       {children}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="card p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-xl font-bold text-[var(--accent-cyan)] md:text-2xl">
+        {value}
+      </p>
+      {detail && (
+        <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
+          {detail}
+        </p>
+      )}
     </div>
   );
 }
@@ -55,13 +81,18 @@ export default function Dashboard() {
     );
   }
 
+  const summary = summaryQuery.data;
+  const ranking = rankingQuery.data;
+  const topSubject = summary?.subjects.topSubjects[0];
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      {/* Hero */}
-      <header className="hero-dark px-4 py-10 sm:py-14">
+    <div className="min-h-screen w-full bg-[var(--color-bg)]">
+      <header className="hero-dark px-4 py-8 md:px-8 md:py-12 lg:px-16">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-6">
-            <p className="gradient-text text-lg font-bold">CareerLens</p>
+          <div className="mb-4 md:mb-6">
+            <p className="gradient-text text-base font-bold md:text-lg">
+              CareerLens
+            </p>
           </div>
 
           {summaryQuery.isLoading && (
@@ -79,16 +110,55 @@ export default function Dashboard() {
             />
           )}
 
-          {summaryQuery.isSuccess && (
-            <GPACard data={summaryQuery.data.gpa} />
-          )}
+          {summaryQuery.isSuccess && <GPACard data={summaryQuery.data.gpa} />}
         </div>
       </header>
 
-      {/* Card grid */}
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Summary: subjects chart */}
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-8 lg:px-16">
+        {(summaryQuery.isLoading || rankingQuery.isLoading) && (
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="skeleton-bone h-20 rounded-2xl" />
+            ))}
+          </div>
+        )}
+
+        {summaryQuery.isSuccess && (
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Overall GPA"
+              value={summary.gpa.overallGpa.toFixed(2)}
+              detail={`Trend: ${summary.gpa.trend}`}
+            />
+            <StatCard
+              label="Subjects"
+              value={String(summary.subjects.all.length)}
+              detail="Tracked in analytics"
+            />
+            <StatCard
+              label="Top Strength"
+              value={topSubject ? `${topSubject.score}%` : "—"}
+              detail={topSubject?.name ?? "No data yet"}
+            />
+            <StatCard
+              label="Batch Rank"
+              value={
+                rankingQuery.isSuccess
+                  ? `#${ranking.rank}`
+                  : rankingQuery.isLoading
+                    ? "…"
+                    : "—"
+              }
+              detail={
+                rankingQuery.isSuccess
+                  ? `Top ${Math.max(1, Math.round(100 - ranking.percentile))}% · ${ranking.totalStudents} students`
+                  : undefined
+              }
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
           {summaryQuery.isLoading && (
             <CardShell title="Subject Performance">
               <SkeletonLoader rows={6} />
@@ -103,7 +173,6 @@ export default function Dashboard() {
             <SubjectBarChart subjects={summaryQuery.data.subjects.all} />
           )}
 
-          {/* Summary: semester line chart */}
           {summaryQuery.isLoading && (
             <CardShell title="GPA Trend">
               <SkeletonLoader rows={5} />
@@ -120,8 +189,7 @@ export default function Dashboard() {
             />
           )}
 
-          {/* Summary: strength / weakness — full width */}
-          <div className="md:col-span-2">
+          <div className="col-span-1 lg:col-span-2">
             {summaryQuery.isLoading && (
               <CardShell title="Strengths & Weaknesses">
                 <SkeletonLoader rows={6} />
@@ -140,12 +208,11 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Ranking — separate query */}
           {rankingQuery.isLoading && (
             <CardShell title="Batch Ranking">
-              <div className="flex flex-col items-center py-6">
-                <div className="skeleton-bone h-32 w-32 rounded-full" />
-                <div className="skeleton-bone mt-4 h-4 w-48" />
+              <div className="flex flex-col items-center py-4 md:py-6">
+                <div className="skeleton-bone h-28 w-28 rounded-full md:h-32 md:w-32" />
+                <div className="skeleton-bone mt-4 h-4 w-40 md:w-48" />
               </div>
             </CardShell>
           )}
@@ -155,7 +222,9 @@ export default function Dashboard() {
             </CardShell>
           )}
           {rankingQuery.isSuccess && (
-            <RankingBadge data={rankingQuery.data} />
+            <div className="col-span-1 lg:col-span-2">
+              <RankingBadge data={rankingQuery.data} />
+            </div>
           )}
         </div>
       </main>

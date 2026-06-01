@@ -38,7 +38,7 @@ export default function GPACard({ data }: GPACardProps) {
       </p>
       <div className="mt-2 flex items-center justify-center gap-3">
         <span
-          className="text-6xl font-bold tracking-tight sm:text-7xl"
+          className="text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl"
           style={{ color: "var(--accent-cyan)" }}
         >
           {data.overallGpa.toFixed(2)}

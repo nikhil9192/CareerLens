@@ -131,8 +131,8 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-8 sm:py-12">
-      <div className="mx-auto w-full max-w-[480px]">
+    <div className="min-h-screen w-full bg-[var(--color-bg)] px-4 py-8 sm:py-12">
+      <div className="mx-auto w-full max-w-md">
         <Link
           to="/"
           className="mb-6 inline-block text-sm font-medium text-[var(--accent-cyan)] hover:underline"
@@ -140,11 +140,11 @@ export default function Register() {
           ← Back to home
         </Link>
 
-        <div className="auth-card p-6 shadow-md sm:p-8">
+        <div className="auth-card w-full p-6 shadow-md sm:p-8">
           <p className="gradient-text text-center text-lg font-bold">
             CareerLens
           </p>
-          <h1 className="mt-4 text-2xl font-bold text-[var(--color-text)]">
+          <h1 className="mt-4 text-xl font-bold text-[var(--color-text)] md:text-2xl">
             Create Account
           </h1>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">
@@ -178,7 +178,7 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:flex md:flex-col md:items-stretch">
             <div>
               <label htmlFor="name" className={labelClass}>
                 Full Name
@@ -330,7 +330,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || schoolsLoading}
-              className={buttonClass}
+              className={`${buttonClass} md:mx-auto md:flex`}
             >
               {loading ? "Creating account..." : "Register"}
             </button>

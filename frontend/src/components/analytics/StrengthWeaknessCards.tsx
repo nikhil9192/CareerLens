@@ -22,7 +22,7 @@ function SubjectList({
       : "rgba(245, 166, 35, 0.08)";
 
   return (
-    <div className="card chart-enter p-5">
+    <div className="card chart-enter p-4 md:p-5">
       <h3
         className="text-sm font-semibold uppercase tracking-wide"
         style={{ color: accent }}

@@ -46,11 +46,11 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4 py-8">
-      <div className="auth-card w-full max-w-[480px] p-6 shadow-md sm:p-8">
+      <div className="auth-card w-full max-w-md p-6 shadow-md sm:p-8">
         <p className="gradient-text text-center text-lg font-bold">
           CareerLens
         </p>
-        <h1 className="mt-4 text-2xl font-bold text-[var(--color-text)]">
+        <h1 className="mt-4 text-xl font-bold text-[var(--color-text)] md:text-2xl">
           Sign In
         </h1>
         <p className="mt-1 text-sm text-[var(--color-text-muted)]">
@@ -77,7 +77,7 @@ export default function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4 md:flex md:flex-col md:items-stretch">
           <div>
             <label htmlFor="email" className={labelClass}>
               Email
@@ -106,7 +106,7 @@ export default function Login() {
             autoComplete="current-password"
           />
 
-          <button type="submit" disabled={loading} className={buttonClass}>
+          <button type="submit" disabled={loading} className={`${buttonClass} md:mx-auto md:flex`}>
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>

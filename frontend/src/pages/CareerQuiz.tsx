@@ -25,7 +25,7 @@ function QuizSkeleton() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="card p-6 shadow-sm"
+          className="card p-4 shadow-sm md:p-6"
         >
           <div className="skeleton-bone mb-3 h-5 w-24" />
           <div className="skeleton-bone mb-4 h-6 w-full" />
@@ -66,6 +66,13 @@ export default function CareerQuiz() {
   const progressPercent = ((page + 1) / TOTAL_PAGES) * 100;
 
   const pageComplete = pageQuestions.every((q) => answers[q.id]);
+
+  const currentQuestionNum = Math.min(
+    pageQuestions.find((q) => !answers[q.id])?.id ??
+      pageQuestions[pageQuestions.length - 1]?.id ??
+      page * QUESTIONS_PER_PAGE + 1,
+    15
+  );
 
   function selectOption(questionId: number, option: string) {
     setAnswers((prev) => ({ ...prev, [questionId]: option }));
@@ -143,32 +150,38 @@ export default function CareerQuiz() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-8">
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center justify-between">
+    <div className="min-h-screen w-full bg-[var(--color-bg)] px-4 py-6 md:py-8">
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-4 flex items-center justify-between md:mb-6">
           <Link
             to="/dashboard"
-            className="text-sm font-medium text-[var(--color-brand)] hover:underline"
+            className="text-xs font-medium text-[var(--color-brand)] hover:underline md:text-sm"
           >
             ← Dashboard
           </Link>
-          <p className="text-lg font-bold text-[var(--color-brand)]">CareerLens</p>
+          <p className="text-base font-bold text-[var(--color-brand)] md:text-lg">
+            CareerLens
+          </p>
         </div>
 
-        <div className="mb-8">
-          <div className="mb-2 flex items-center justify-between text-sm font-medium text-[var(--color-text-muted)]">
-            <span>{PAGE_LABELS[page]}</span>
-            <span>{Math.round(progressPercent)}%</span>
+        <div className="mb-6 md:mb-8">
+          <div className="mb-2 flex items-center justify-between text-xs font-medium text-[var(--color-text-muted)] md:text-sm">
+            <span className="md:hidden">Q{currentQuestionNum} of 15</span>
+            <span className="hidden md:inline">{PAGE_LABELS[page]}</span>
+            <span className="hidden md:inline">{Math.round(progressPercent)}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
+          <div className="hidden h-2 overflow-hidden rounded-full bg-[var(--color-border)] md:block">
             <div
               className="h-full rounded-full bg-[var(--color-brand)] transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+          <p className="mt-1 text-center text-xs font-medium text-[var(--accent-cyan)] md:hidden">
+            Page {page + 1} of {TOTAL_PAGES}
+          </p>
         </div>
 
-        <h1 className="mb-6 text-2xl font-bold text-[var(--color-text)]">
+        <h1 className="mb-4 text-xl font-bold text-[var(--color-text)] md:mb-6 md:text-2xl">
           Career Assessment Quiz
         </h1>
 
@@ -193,7 +206,7 @@ export default function CareerQuiz() {
             {pageQuestions.map((question) => (
               <div
                 key={question.id}
-                className="card p-6 shadow-sm"
+                className="card p-4 shadow-sm md:p-6"
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <span
@@ -206,7 +219,7 @@ export default function CareerQuiz() {
                   </span>
                 </div>
 
-                <p className="mb-4 text-base font-medium text-[var(--color-text)]">
+                <p className="mb-3 text-sm font-medium text-[var(--color-text)] md:mb-4 md:text-base">
                   {question.text}
                 </p>
 
@@ -218,7 +231,7 @@ export default function CareerQuiz() {
                         key={option}
                         type="button"
                         onClick={() => selectOption(question.id, option)}
-                        className={`w-full rounded-xl border px-4 py-3 text-left text-sm transition ${
+                        className={`w-full rounded-xl border px-3 py-2.5 text-left text-xs transition md:px-4 md:py-3 md:text-sm ${
                           selected
                             ? "border-[var(--accent-cyan)] bg-[rgba(0,212,255,0.12)] font-medium text-[var(--accent-cyan)]"
                             : "border-[var(--color-border)] bg-[var(--input-bg)] text-[var(--color-text)] hover:border-[var(--accent-cyan)] hover:bg-[rgba(0,212,255,0.06)]"
@@ -235,13 +248,13 @@ export default function CareerQuiz() {
         )}
 
         {!loading && questions.length > 0 && (
-          <div className="mt-8 flex gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row md:mt-8">
             {page > 0 && (
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={submitting}
-                className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--bg-card)] py-3 font-semibold text-[var(--color-text)] transition hover:bg-[var(--bg-card-hover)] disabled:opacity-50"
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--bg-card)] py-3 text-sm font-semibold text-[var(--color-text)] transition hover:bg-[var(--bg-card-hover)] disabled:opacity-50 sm:flex-1 md:text-base"
               >
                 Back
               </button>
@@ -250,7 +263,7 @@ export default function CareerQuiz() {
               type="button"
               onClick={handleNext}
               disabled={!pageComplete || submitting}
-              className="btn-primary flex-1 py-3 font-semibold disabled:cursor-not-allowed"
+              className="btn-primary w-full py-3 text-sm font-semibold disabled:cursor-not-allowed sm:flex-1 md:text-base"
             >
               {submitting
                 ? "Submitting..."

@@ -1,5 +1,18 @@
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const TOKEN_KEY = "careerlens_token";
+
+function getBaseUrl(): string {
+  const url = import.meta.env.VITE_API_URL;
+  if (url) return url;
+
+  // Dev fallback so registration works even before .env.local is loaded
+  if (import.meta.env.DEV) {
+    return "http://localhost:8000";
+  }
+
+  throw new Error(
+    "VITE_API_URL is not set. Add it to frontend/.env.local or Vercel env vars."
+  );
+}
 
 function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -41,14 +54,26 @@ async function handleResponse(res: Response): Promise<unknown> {
 }
 
 export async function apiGet(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: authHeaders(),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${getBaseUrl()}${path}`, {
+      headers: authHeaders(),
+    });
+  } catch {
+    throw {
+      response: {
+        data: {
+          error: "Cannot reach the API server. Start the backend on port 8000.",
+        },
+        status: 0,
+      },
+    };
+  }
   return handleResponse(res);
 }
 
 export async function apiPost(path: string, body: object): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(body),
@@ -57,7 +82,7 @@ export async function apiPost(path: string, body: object): Promise<unknown> {
 }
 
 export async function apiPut(path: string, body: object): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(body),
@@ -66,7 +91,7 @@ export async function apiPut(path: string, body: object): Promise<unknown> {
 }
 
 export async function apiDelete(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${getBaseUrl()}${path}`, {
     method: "DELETE",
     headers: authHeaders(),
   });

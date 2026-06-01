@@ -28,7 +28,7 @@ export default function SubjectBarChart({ subjects }: SubjectBarChartProps) {
   }));
 
   return (
-    <div className="chart-enter rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+    <div className="card chart-glow chart-enter p-6">
       <h2 className="text-lg font-bold text-[var(--color-text)]">
         Subject Performance
       </h2>

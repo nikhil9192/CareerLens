@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, useEffect, useCallback, FormEvent, ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput, {
   fieldClass,
@@ -46,12 +46,24 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const loadSchools = useCallback(() => {
+    setSchoolsLoading(true);
+    setSchoolsError("");
     fetchSchools()
       .then(setSchools)
-      .catch(() => setSchoolsError("Failed to load schools. Please refresh."))
+      .catch((err: unknown) => {
+        const message =
+          (err as { response?: { data?: { error?: string } } })?.response?.data
+            ?.error ||
+          "Failed to load schools. Make sure the backend is running on port 8000.";
+        setSchoolsError(message);
+      })
       .finally(() => setSchoolsLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadSchools();
+  }, [loadSchools]);
 
   function handleChange(
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -123,13 +135,13 @@ export default function Register() {
       <div className="mx-auto w-full max-w-[480px]">
         <Link
           to="/"
-          className="mb-6 inline-block text-sm font-medium text-[var(--color-brand)] hover:text-[var(--color-brand-dark)]"
+          className="mb-6 inline-block text-sm font-medium text-[var(--accent-cyan)] hover:underline"
         >
           ← Back to home
         </Link>
 
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-md sm:p-8">
-          <p className="text-center text-lg font-bold text-[var(--color-brand)]">
+        <div className="auth-card p-6 shadow-md sm:p-8">
+          <p className="gradient-text text-center text-lg font-bold">
             CareerLens
           </p>
           <h1 className="mt-4 text-2xl font-bold text-[var(--color-text)]">
@@ -145,7 +157,14 @@ export default function Register() {
               className="mt-4 rounded-lg p-3 text-sm text-[var(--color-fail)]"
               style={{ backgroundColor: "var(--color-error-bg)" }}
             >
-              {schoolsError}
+              <p>{schoolsError}</p>
+              <button
+                type="button"
+                onClick={loadSchools}
+                className="mt-2 font-medium text-[var(--color-brand)] underline hover:text-[var(--color-brand-dark)]"
+              >
+                Retry loading schools
+              </button>
             </div>
           )}
 

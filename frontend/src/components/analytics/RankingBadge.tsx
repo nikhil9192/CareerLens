@@ -12,7 +12,7 @@ export default function RankingBadge({ data }: RankingBadgeProps) {
     circumference - (ringPercent / 100) * circumference;
 
   return (
-    <div className="chart-enter flex flex-col items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+    <div className="card chart-enter flex flex-col items-center p-6">
       <h2 className="text-lg font-bold text-[var(--color-text)]">
         Batch Ranking
       </h2>
@@ -35,7 +35,7 @@ export default function RankingBadge({ data }: RankingBadgeProps) {
             cy="60"
             r="54"
             fill="none"
-            stroke="var(--color-brand)"
+            stroke="var(--accent-cyan)"
             strokeWidth="10"
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -45,7 +45,7 @@ export default function RankingBadge({ data }: RankingBadgeProps) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-[var(--color-brand)]">
+          <span className="text-2xl font-bold text-[var(--accent-cyan)]">
             {data.percentile}%
           </span>
           <span className="text-xs text-[var(--color-text-muted)]">

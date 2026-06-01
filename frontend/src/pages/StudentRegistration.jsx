@@ -15,6 +15,9 @@ const INITIAL_FORM = {
 
 const CLASS_OPTIONS = ["6", "7", "8", "9", "10", "11", "12"];
 
+const labelClass = "mb-1 block text-sm font-medium text-[var(--color-text-muted)]";
+const inputClass = "input-dark";
+
 export default function StudentRegistration() {
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
@@ -70,25 +73,28 @@ export default function StudentRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-8 sm:py-12">
       <div className="mx-auto w-full max-w-lg">
         <Link
           to="/"
-          className="mb-6 inline-block text-sm text-indigo-600 hover:text-indigo-700"
+          className="mb-6 inline-block text-sm text-[var(--accent-cyan)] hover:underline"
         >
           ← Back to home
         </Link>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h1 className="text-2xl font-bold text-slate-800">Student Registration</h1>
-          <p className="mt-1 text-sm text-slate-500">
+        <div className="auth-card p-6 shadow-sm sm:p-8">
+          <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            Student Registration
+          </h1>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Fill in your details to get started with CareerLens.
           </p>
 
           {success && (
             <div
               role="alert"
-              className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+              className="mt-4 rounded-lg p-3 text-sm text-[var(--color-good)]"
+              style={{ backgroundColor: "var(--color-success-bg)" }}
             >
               {success}
             </div>
@@ -97,7 +103,8 @@ export default function StudentRegistration() {
           {error && (
             <div
               role="alert"
-              className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className="mt-4 rounded-lg p-3 text-sm text-[var(--color-fail)]"
+              style={{ backgroundColor: "var(--color-error-bg)" }}
             >
               {error}
             </div>
@@ -105,7 +112,7 @@ export default function StudentRegistration() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label htmlFor="name" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="name" className={labelClass}>
                 Full Name
               </label>
               <input
@@ -115,13 +122,13 @@ export default function StudentRegistration() {
                 required
                 value={form.name}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
                 placeholder="Enter your full name"
               />
             </div>
 
             <div>
-              <label htmlFor="class_grade" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="class_grade" className={labelClass}>
                 Class
               </label>
               <select
@@ -130,7 +137,7 @@ export default function StudentRegistration() {
                 required
                 value={form.class_grade}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
               >
                 <option value="">Select class</option>
                 {CLASS_OPTIONS.map((grade) => (
@@ -142,7 +149,7 @@ export default function StudentRegistration() {
             </div>
 
             <div>
-              <label htmlFor="school_name" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="school_name" className={labelClass}>
                 School Name
               </label>
               <input
@@ -152,13 +159,13 @@ export default function StudentRegistration() {
                 required
                 value={form.school_name}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
                 placeholder="Enter your school name"
               />
             </div>
 
             <div>
-              <label htmlFor="mobile" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="mobile" className={labelClass}>
                 Mobile Number
               </label>
               <input
@@ -168,13 +175,13 @@ export default function StudentRegistration() {
                 required
                 value={form.mobile}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
                 placeholder="10-digit mobile number"
               />
             </div>
 
             <div>
-              <label htmlFor="gender" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="gender" className={labelClass}>
                 Gender
               </label>
               <select
@@ -183,7 +190,7 @@ export default function StudentRegistration() {
                 required
                 value={form.gender}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
               >
                 <option value="">Select gender</option>
                 <option value="Male">Male</option>
@@ -193,7 +200,7 @@ export default function StudentRegistration() {
             </div>
 
             <div>
-              <label htmlFor="medium" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="medium" className={labelClass}>
                 Medium
               </label>
               <select
@@ -202,7 +209,7 @@ export default function StudentRegistration() {
                 required
                 value={form.medium}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
               >
                 <option value="">Select medium</option>
                 <option value="Hindi">Hindi</option>
@@ -211,7 +218,7 @@ export default function StudentRegistration() {
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="password" className={labelClass}>
                 Password
               </label>
               <input
@@ -222,13 +229,13 @@ export default function StudentRegistration() {
                 minLength={6}
                 value={form.password}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
                 placeholder="Create a password (min 6 characters)"
               />
             </div>
 
             <div>
-              <label htmlFor="confirm_password" className="mb-1 block text-sm font-medium text-slate-700">
+              <label htmlFor="confirm_password" className={labelClass}>
                 Re-enter Password
               </label>
               <input
@@ -239,7 +246,7 @@ export default function StudentRegistration() {
                 minLength={6}
                 value={form.confirm_password}
                 onChange={handleChange}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                className={inputClass}
                 placeholder="Re-enter your password"
               />
             </div>
@@ -247,7 +254,7 @@ export default function StudentRegistration() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-indigo-600 py-3 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary w-full py-3 text-sm font-medium disabled:cursor-not-allowed"
             >
               {loading ? "Submitting..." : "Register"}
             </button>

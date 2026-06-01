@@ -7,20 +7,37 @@ import marksRoutes from "./routes/marks";
 import studentsRoutes from "./routes/students";
 import authRoutes from "./routes/auth";
 import schoolsRoutes from "./routes/schools";
+import careerRoutes from "./routes/career";
 import { AppError } from "./lib/errors";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 8000;
 
-const allowedOrigins = [
+const productionOrigins = [
   "https://career-lens-ivory.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000",
-];
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+const devOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  if (productionOrigins.includes(origin)) return true;
+  if (process.env.NODE_ENV !== "production" && devOriginPattern.test(origin)) {
+    return true;
+  }
+  return false;
+}
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
     credentials: true,
   })
 );
@@ -36,6 +53,7 @@ app.use("/api/marks", marksRoutes);
 app.use("/api/students", studentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolsRoutes);
+app.use("/api/career", careerRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({

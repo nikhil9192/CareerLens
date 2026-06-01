@@ -15,15 +15,14 @@ function SubjectList({
   variant: "strong" | "weak";
 }) {
   const accent =
-    variant === "strong" ? "var(--color-good)" : "var(--color-fail)";
+    variant === "strong" ? "var(--accent-cyan)" : "var(--accent-gold)";
   const bg =
-    variant === "strong" ? "var(--color-success-bg)" : "var(--color-error-bg)";
+    variant === "strong"
+      ? "rgba(0, 212, 255, 0.08)"
+      : "rgba(245, 166, 35, 0.08)";
 
   return (
-    <div
-      className="chart-enter rounded-2xl border border-[var(--color-border)] p-5 shadow-sm"
-      style={{ backgroundColor: "var(--color-surface)" }}
-    >
+    <div className="card chart-enter p-5">
       <h3
         className="text-sm font-semibold uppercase tracking-wide"
         style={{ color: accent }}

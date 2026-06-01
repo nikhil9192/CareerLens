@@ -15,7 +15,7 @@ export default function PasswordInput({
   const [visible, setVisible] = useState(false);
 
   const inputClass =
-    "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 pr-12 text-base text-[var(--color-text)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand-light)] disabled:opacity-60";
+    "input-dark pr-12 text-base disabled:opacity-60";
 
   return (
     <div>
@@ -79,10 +79,10 @@ export default function PasswordInput({
 }
 
 export const fieldClass =
-  "w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-base text-[var(--color-text)] outline-none focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand-light)] disabled:opacity-60";
+  "input-dark text-base disabled:opacity-60";
 
 export const labelClass =
-  "mb-1 block text-sm font-medium text-[var(--color-text-muted)]";
+  "mb-1 block text-sm font-medium text-[var(--text-secondary)]";
 
 export const buttonClass =
-  "w-full rounded-xl bg-[var(--color-brand)] py-3 font-semibold text-white transition hover:bg-[var(--color-brand-dark)] disabled:cursor-not-allowed disabled:opacity-60";
+  "btn-primary w-full py-3 font-semibold disabled:cursor-not-allowed";

@@ -14,8 +14,7 @@ const SUBJECTS = [
 
 const INITIAL_MARKS = Object.fromEntries(SUBJECTS.map((s) => [s, ""]));
 
-const inputClass =
-  "w-full rounded-lg border border-gray-300 px-4 py-3 text-base text-gray-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-gray-100";
+const inputClass = "input-dark disabled:opacity-60";
 
 export default function MarksEntry() {
   const navigate = useNavigate();
@@ -72,34 +71,45 @@ export default function MarksEntry() {
         subjects,
       });
 
-      setSuccess(data.message || "Marks saved successfully!");
-      setTimeout(() => navigate("/questions"), 1500);
+      setSuccess("Marks saved successfully!");
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (err) {
+      const apiErr = err && typeof err === "object" ? err : {};
+      const response = "response" in apiErr ? apiErr.response : undefined;
+      const data =
+        response && typeof response === "object" && "data" in response
+          ? response.data
+          : undefined;
       const message =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
+        (data && typeof data === "object" && "error" in data && data.error) ||
+        (data && typeof data === "object" && "message" in data && data.message) ||
+        (err instanceof Error ? err.message : null) ||
         "Failed to save marks. Please try again.";
-      setError(message);
+      setError(String(message));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] px-4 py-8">
+    <div className="min-h-screen bg-[var(--color-bg)] px-4 py-8">
       <div className="mx-auto w-full max-w-[480px]">
-        <p className="mb-2 text-center text-lg font-bold text-indigo-600">
-          CareerLens
-        </p>
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard")}
+          className="mb-4 text-sm font-medium text-[var(--color-brand)] hover:underline"
+        >
+          ← Back to Dashboard
+        </button>
 
-        <div className="rounded-2xl bg-white p-6 shadow-md">
-          <h1 className="text-2xl font-bold text-gray-800">Enter Your Marks</h1>
+        <div className="auth-card p-6">
+          <h1 className="text-2xl font-bold text-[var(--color-text)]">Enter Your Marks</h1>
 
           {success && (
             <div
-              role="alert"
-              className="mt-4 rounded-lg bg-green-50 p-3 text-green-600"
+              role="status"
+              className="mt-4 rounded-lg p-3 text-sm text-[var(--color-good)]"
+              style={{ backgroundColor: "var(--color-success-bg)" }}
             >
               {success}
             </div>
@@ -108,7 +118,8 @@ export default function MarksEntry() {
           {error && (
             <div
               role="alert"
-              className="mt-4 rounded-lg bg-red-50 p-3 text-red-600"
+              className="mt-4 rounded-lg p-3 text-sm text-[var(--color-fail)]"
+              style={{ backgroundColor: "var(--color-error-bg)" }}
             >
               {error}
             </div>
@@ -118,7 +129,7 @@ export default function MarksEntry() {
             <div>
               <label
                 htmlFor="exam_term"
-                className="mb-1 block text-sm font-medium text-gray-600"
+                className="mb-1 block text-sm font-medium text-[var(--color-text-muted)]"
               >
                 Exam Term
               </label>
@@ -144,16 +155,16 @@ export default function MarksEntry() {
             </div>
 
             <div className="space-y-4">
-              <p className="text-sm font-medium text-gray-600">Subjects</p>
+              <p className="text-sm font-medium text-[var(--color-text-muted)]">Subjects</p>
               <div className="space-y-3">
                 {SUBJECTS.map((subject) => (
                   <div
                     key={subject}
-                    className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                    className="card p-4"
                   >
                     <label
                       htmlFor={subject}
-                      className="mb-2 block text-sm font-medium text-gray-600"
+                      className="mb-2 block text-sm font-medium text-[var(--color-text-muted)]"
                     >
                       {subject}
                     </label>
@@ -177,7 +188,7 @@ export default function MarksEntry() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn-primary flex w-full items-center justify-center gap-2 py-3 font-semibold disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>

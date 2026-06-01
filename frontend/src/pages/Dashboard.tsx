@@ -1,6 +1,5 @@
 import { type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import GPACard from "../components/analytics/GPACard";
 import SubjectBarChart from "../components/analytics/SubjectBarChart";
 import SemesterLineChart from "../components/analytics/SemesterLineChart";
@@ -22,7 +21,7 @@ function CardShell({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+    <div className="card p-6">
       {title && (
         <h2 className="mb-4 text-lg font-bold text-[var(--color-text)]">
           {title}
@@ -59,21 +58,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
       {/* Hero */}
-      <header
-        className="px-4 py-10 sm:py-14"
-        style={{
-          background: `linear-gradient(135deg, var(--color-hero-from), var(--color-hero-to))`,
-        }}
-      >
+      <header className="hero-dark px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-6 flex items-center justify-between">
-            <p className="text-lg font-bold text-white/90">CareerLens</p>
-            <Link
-              to="/marks"
-              className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/30"
-            >
-              Enter Marks
-            </Link>
+          <div className="mb-6">
+            <p className="gradient-text text-lg font-bold">CareerLens</p>
           </div>
 
           {summaryQuery.isLoading && (

@@ -2,7 +2,7 @@ import { useState, FormEvent, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PasswordInput, { fieldClass, labelClass, buttonClass } from "../components/PasswordInput";
 import { login } from "../services/auth.api";
-import { setStudentId } from "../services/auth";
+import { setStudentId, setStudentName } from "../services/auth";
 import { TOKEN_KEY } from "../lib/api";
 
 export default function Login() {
@@ -32,6 +32,7 @@ export default function Login() {
       const data = await login({ email: email.trim(), password });
       localStorage.setItem(TOKEN_KEY, data.token);
       setStudentId(data.student.id);
+      setStudentName(data.student.name);
       navigate("/dashboard");
     } catch (err: unknown) {
       const message =
@@ -45,8 +46,8 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--color-bg)] px-4 py-8">
-      <div className="w-full max-w-[480px] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-md sm:p-8">
-        <p className="text-center text-lg font-bold text-[var(--color-brand)]">
+      <div className="auth-card w-full max-w-[480px] p-6 shadow-md sm:p-8">
+        <p className="gradient-text text-center text-lg font-bold">
           CareerLens
         </p>
         <h1 className="mt-4 text-2xl font-bold text-[var(--color-text)]">
@@ -114,7 +115,7 @@ export default function Login() {
           New student?{" "}
           <Link
             to="/register"
-            className="font-medium text-[var(--color-brand)] hover:text-[var(--color-brand-dark)]"
+            className="font-medium text-[var(--accent-cyan)] hover:underline"
           >
             Create an account
           </Link>

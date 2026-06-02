@@ -1,4 +1,6 @@
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import type { Browser } from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import { supabase } from "../lib/supabase";
 import { AppError } from "../lib/errors";
 
@@ -171,7 +173,7 @@ export function generateReportHTML(input: ReportHtmlInput): string {
         <td>${escapeHtml(mark.subject)}</td>
         <td>${escapeHtml(mark.exam_term)}</td>
         <td>${mark.marks} / ${mark.total_marks}</td>
-        <td>${Math.round((mark.marks / mark.total_marks) * 100)}%</td>
+        <td>${mark.total_marks > 0 ? Math.round((mark.marks / mark.total_marks) * 100) : mark.marks}%</td>
       </tr>`
     )
     .join("");
@@ -427,13 +429,48 @@ export function generateReportHTML(input: ReportHtmlInput): string {
 </html>`;
 }
 
-async function renderPdf(html: string): Promise<Buffer> {
-  const browser = await puppeteer.launch({
+async function launchBrowser(): Promise<Browser> {
+  const systemChromium = process.env.PUPPETEER_EXECUTABLE_PATH;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (systemChromium) {
+    return puppeteer.launch({
+      executablePath: systemChromium,
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
+    });
+  }
+
+  if (isProduction) {
+    return puppeteer.launch({
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  }
+
+  const puppeteerFull = await import("puppeteer");
+  return puppeteerFull.default.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
   });
+}
+
+async function renderPdf(html: string): Promise<Buffer> {
+  let browser: Browser | undefined;
 
   try {
+    browser = await launchBrowser();
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
     const pdf = await page.pdf({
@@ -442,8 +479,17 @@ async function renderPdf(html: string): Promise<Buffer> {
       margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
     });
     return Buffer.from(pdf);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[report] PDF generation failed:", message);
+    throw new AppError(
+      "Could not generate PDF report. Please try again in a moment.",
+      500
+    );
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch(() => undefined);
+    }
   }
 }
 

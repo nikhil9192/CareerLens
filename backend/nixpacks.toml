@@ -2,13 +2,12 @@
 nixPkgs = ["nodejs_22"]
 aptPkgs = ["chromium", "fonts-liberation", "fonts-noto-core"]
 
+[phases.build]
+cmds = ["npm ci", "npm run build", "npm prune --omit=dev"]
+
+[start]
+cmd = "NODE_ENV=production npm start"
+
 [variables]
 PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-NODE_ENV = "production"
-
-[phases.build]
-cmds = ["npm ci", "npm run build"]
-
-[start]
-cmd = "npm start"

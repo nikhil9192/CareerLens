@@ -98,4 +98,52 @@ export async function apiDelete(path: string): Promise<unknown> {
   return handleResponse(res);
 }
 
+export async function apiDownloadBlob(path: string): Promise<{
+  blob: Blob;
+  filename: string;
+}> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${getBaseUrl()}${path}`, { headers });
+  } catch {
+    throw {
+      response: {
+        data: {
+          error: "Cannot reach the API server. Start the backend on port 8000.",
+        },
+        status: 0,
+      },
+    };
+  }
+
+  if (res.status === 401) {
+    localStorage.removeItem(TOKEN_KEY);
+    window.location.href = "/login";
+    throw { response: { data: { error: "Unauthorized" }, status: 401 } };
+  }
+
+  if (!res.ok) {
+    let data: unknown = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Failed to download report." };
+    }
+    throw { response: { data, status: res.status } };
+  }
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] ?? "CareerLens-Report.pdf";
+
+  return { blob, filename };
+}
+
 export { getToken, TOKEN_KEY };

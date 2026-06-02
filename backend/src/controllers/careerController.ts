@@ -8,6 +8,7 @@ import {
   AnswerInput,
   Career,
   StudentMark,
+  TeacherAssessment,
   CareerMatchResult,
 } from "../services/careerService";
 
@@ -110,6 +111,18 @@ export async function submitAssessment(
 
     const studentMarks = (marksData ?? []) as StudentMark[];
 
+    const { data: assessmentData, error: assessmentError } = await supabase
+      .from("teacher_assessments")
+      .select("curiosity, communication, leadership, persistence, creativity")
+      .eq("student_id", studentId)
+      .maybeSingle();
+
+    if (assessmentError) {
+      throw new AppError(assessmentError.message, 500);
+    }
+
+    const teacherAssessment = (assessmentData as TeacherAssessment | null) ?? null;
+
     const { data: careersData, error: careersError } = await supabase
       .from("careers")
       .select("*");
@@ -119,7 +132,12 @@ export async function submitAssessment(
     }
 
     const careers = (careersData ?? []) as Career[];
-    const topMatches = matchCareersToStudent(answers, careers, studentMarks);
+    const topMatches = matchCareersToStudent(
+      answers,
+      careers,
+      studentMarks,
+      teacherAssessment
+    );
 
     const { error: deleteMatchesError } = await supabase
       .from("career_matches")

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { fetchCareerResults, retakeCareerQuiz } from "../services/career.api";
+import { apiDownloadBlob } from "../lib/api";
 import { fetchMe } from "../services/auth.api";
 import { getStudentName } from "../services/auth";
 import type { CareerMatch } from "../types/career";
@@ -121,6 +122,8 @@ export default function CareerResults() {
   const [matches, setMatches] = useState<CareerMatch[]>([]);
   const [studentName, setStudentName] = useState(getStudentName() ?? "Student");
   const [retaking, setRetaking] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -167,6 +170,27 @@ export default function CareerResults() {
     }
   }
 
+  async function handleDownloadReport() {
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      const { blob, filename } = await apiDownloadBlob("/api/report/generate");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to download report. Please try again.";
+      setDownloadError(message);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   const [first, ...rest] = matches;
 
   return (
@@ -208,6 +232,15 @@ export default function CareerResults() {
             )}
 
             <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap md:pt-4">
+              {downloadError && (
+                <p
+                  role="alert"
+                  className="w-full rounded-lg p-3 text-sm text-[var(--color-fail)]"
+                  style={{ backgroundColor: "var(--color-error-bg)" }}
+                >
+                  {downloadError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={handleRetake}
@@ -224,11 +257,11 @@ export default function CareerResults() {
               </Link>
               <button
                 type="button"
-                disabled
-                title="Coming in Module 5"
-                className="w-full cursor-not-allowed rounded-xl border border-[var(--color-border)] bg-[var(--bg-card)] py-3 text-sm font-semibold text-[var(--color-text-muted)] opacity-60 md:text-base lg:flex-1"
+                onClick={handleDownloadReport}
+                disabled={downloading}
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--bg-card)] py-3 text-sm font-semibold text-[var(--color-text)] transition hover:bg-[var(--bg-card-hover)] disabled:opacity-50 md:text-base lg:flex-1"
               >
-                Download Report
+                {downloading ? "Generating PDF..." : "Download Report"}
               </button>
             </div>
           </div>

@@ -8,6 +8,7 @@ import studentsRoutes from "./routes/students";
 import authRoutes from "./routes/auth";
 import schoolsRoutes from "./routes/schools";
 import careerRoutes from "./routes/career";
+import reportRoutes from "./routes/report";
 import { AppError } from "./lib/errors";
 
 const app = express();
@@ -54,6 +55,7 @@ app.use("/api/students", studentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolsRoutes);
 app.use("/api/career", careerRoutes);
+app.use("/api/report", reportRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({

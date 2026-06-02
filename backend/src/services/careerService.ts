@@ -41,6 +41,14 @@ export interface StudentMark {
   total_marks: number;
 }
 
+export interface TeacherAssessment {
+  curiosity: number;
+  communication: number;
+  leadership: number;
+  persistence: number;
+  creativity: number;
+}
+
 export interface CareerMatchResult {
   rank: number;
   match_score: number;
@@ -233,223 +241,275 @@ export const CAREER_QUESTIONS: CareerQuestion[] = [
   },
 ];
 
-const HOLLAND_QUESTION_MAP: Record<string, number[]> = {
-  Investigative: [4, 6],
-  Social: [7, 8, 9],
-  Artistic: [1, 2, 3],
-  Conventional: [13, 14],
-  Enterprising: [10, 11, 15],
-  Realistic: [12],
-};
+const CLUSTER_TYPES = [
+  "Investigative",
+  "Social",
+  "Artistic",
+  "Conventional",
+  "Enterprising",
+  "Realistic",
+] as const;
 
-const HOLLAND_TYPES = Object.keys(HOLLAND_QUESTION_MAP);
+type ClusterType = (typeof CLUSTER_TYPES)[number];
 
-function normalizeCluster(value: string): string {
-  const lower = value.toLowerCase();
-  return HOLLAND_TYPES.find((h) => h.toLowerCase() === lower) ?? value;
+function emptyClusterScores(): Record<ClusterType, number> {
+  return {
+    Investigative: 0,
+    Social: 0,
+    Artistic: 0,
+    Conventional: 0,
+    Enterprising: 0,
+    Realistic: 0,
+  };
 }
 
-function optionPoints(question: CareerQuestion, selectedOption: string): number {
-  const index = question.options.indexOf(selectedOption);
-  if (index < 0) return 1;
-  return question.options.length - index;
+function normalizeCluster(value: string): ClusterType | null {
+  const match = CLUSTER_TYPES.find(
+    (cluster) => cluster.toLowerCase() === value.trim().toLowerCase()
+  );
+  return match ?? null;
+}
+
+export function calculateClusterScores(
+  responses: Pick<InterestResponse, "question_number" | "selected_option">[]
+): Record<ClusterType, number> {
+  const clusterScores = emptyClusterScores();
+
+  for (const response of responses) {
+    const q = response.question_number;
+    const opt = response.selected_option;
+
+    if (q === 1) {
+      if (opt.includes("Building")) clusterScores.Investigative += 2;
+      if (opt.includes("Helping")) clusterScores.Social += 2;
+      if (opt.includes("Analysing")) clusterScores.Investigative += 2;
+      if (opt.includes("Creating")) clusterScores.Artistic += 2;
+      if (opt.includes("Leading")) clusterScores.Enterprising += 2;
+    }
+
+    if (q === 2) {
+      if (opt.includes("Code") || opt.includes("build"))
+        clusterScores.Investigative += 2;
+      if (opt.includes("Read") || opt.includes("research"))
+        clusterScores.Investigative += 1;
+      if (opt.includes("Talk")) clusterScores.Social += 2;
+      if (opt.includes("Draw") || opt.includes("create"))
+        clusterScores.Artistic += 2;
+      if (opt.includes("Plan") || opt.includes("organise"))
+        clusterScores.Conventional += 2;
+    }
+
+    if (q === 3) {
+      if (opt.includes("Mathematics")) {
+        clusterScores.Investigative += 2;
+        clusterScores.Conventional += 1;
+      }
+      if (opt.includes("Science")) {
+        clusterScores.Investigative += 2;
+        clusterScores.Realistic += 1;
+      }
+      if (opt.includes("Languages")) {
+        clusterScores.Social += 2;
+        clusterScores.Artistic += 1;
+      }
+      if (opt.includes("Commerce")) {
+        clusterScores.Conventional += 2;
+        clusterScores.Enterprising += 1;
+      }
+      if (opt.includes("Arts")) clusterScores.Artistic += 3;
+    }
+
+    if (q === 7) {
+      if (opt.includes("Presenter")) clusterScores.Enterprising += 2;
+      if (opt.includes("Researcher")) clusterScores.Investigative += 2;
+      if (opt.includes("Planner")) clusterScores.Conventional += 2;
+      if (opt.includes("Builder")) clusterScores.Realistic += 2;
+      if (opt.includes("Supporter")) clusterScores.Social += 2;
+    }
+
+    if (q === 10) {
+      if (opt.includes("Alone")) clusterScores.Investigative += 1;
+      if (opt.includes("Small team")) clusterScores.Conventional += 1;
+      if (opt.includes("Large team")) clusterScores.Social += 1;
+    }
+
+    if (q === 13) {
+      if (opt.includes("salary")) clusterScores.Conventional += 2;
+      if (opt.includes("Social impact")) clusterScores.Social += 2;
+      if (opt.includes("Creative")) clusterScores.Artistic += 2;
+      if (opt.includes("security")) clusterScores.Conventional += 1;
+      if (opt.includes("Learning")) clusterScores.Investigative += 1;
+    }
+
+    if (q === 14) {
+      if (opt.includes("business")) clusterScores.Enterprising += 3;
+      if (opt.includes("Freelance")) clusterScores.Artistic += 1;
+      if (opt.includes("Government")) clusterScores.Conventional += 2;
+    }
+
+    if (q === 15) {
+      if (opt.includes("Technical")) clusterScores.Investigative += 2;
+      if (opt.includes("manager")) clusterScores.Enterprising += 2;
+      if (opt.includes("venture")) clusterScores.Enterprising += 3;
+      if (opt.includes("Researcher")) clusterScores.Investigative += 2;
+      if (opt.includes("Helping")) clusterScores.Social += 2;
+    }
+  }
+
+  return clusterScores;
+}
+
+function applyTeacherBonus(
+  clusterScores: Record<ClusterType, number>,
+  assessment: TeacherAssessment | null | undefined
+): Record<ClusterType, number> {
+  if (!assessment) return clusterScores;
+
+  const teacherBonus: Record<ClusterType, number> = {
+    Investigative: assessment.curiosity * 0.5,
+    Social: assessment.communication * 0.5,
+    Enterprising: assessment.leadership * 0.5,
+    Conventional: assessment.persistence * 0.5,
+    Artistic: assessment.creativity * 0.5,
+    Realistic: 0,
+  };
+
+  const adjusted = { ...clusterScores };
+  for (const cluster of CLUSTER_TYPES) {
+    adjusted[cluster] += teacherBonus[cluster];
+  }
+
+  return adjusted;
+}
+
+function averageMarks(marks: StudentMark[]): number {
+  if (marks.length === 0) return 0;
+  const total = marks.reduce((sum, mark) => sum + mark.marks, 0);
+  return total / marks.length;
+}
+
+function strongSubjects(marks: StudentMark[]): string[] {
+  return marks.filter((mark) => mark.marks >= 70).map((mark) => mark.subject);
+}
+
+function subjectMatchesRequired(
+  strong: string[],
+  required: string
+): boolean {
+  const normalizedRequired = required.trim().toLowerCase();
+  return strong.some((subject) => {
+    const normalizedSubject = subject.trim().toLowerCase();
+    return (
+      normalizedSubject === normalizedRequired ||
+      normalizedSubject.includes(normalizedRequired) ||
+      normalizedRequired.includes(normalizedSubject)
+    );
+  });
+}
+
+function buildReasoning(
+  career: Career,
+  clusterScores: Record<ClusterType, number>,
+  avgMarks: number
+): string {
+  const topCluster =
+    Object.entries(clusterScores).sort((a, b) => b[1] - a[1])[0]?.[0] ??
+    career.cluster;
+
+  const reasoning =
+    `Your ${topCluster.toLowerCase()} interests align with this career. ` +
+    (avgMarks >= career.min_marks
+      ? "Your marks qualify you for this path. "
+      : `Work on improving your marks by ${Math.max(
+          0,
+          career.min_marks - Math.round(avgMarks)
+        )} points. `) +
+    (career.growth_trend === "Rising"
+      ? "This is a growing field with good future prospects."
+      : "This is a stable career with consistent opportunities.");
+
+  return reasoning;
+}
+
+function scoreCareer(
+  career: Career,
+  clusterScores: Record<ClusterType, number>,
+  avgMarks: number,
+  strong: string[]
+): { match_score: number; reasoning: string } {
+  let score = 0;
+
+  const maxCluster = Math.max(...Object.values(clusterScores), 0);
+  const careerCluster = normalizeCluster(career.cluster);
+  const careerClusterScore = careerCluster
+    ? clusterScores[careerCluster]
+    : 0;
+  const clusterPoints =
+    maxCluster > 0 ? (careerClusterScore / maxCluster) * 40 : 0;
+  score += clusterPoints;
+
+  if (avgMarks >= career.min_marks) {
+    score += 30;
+  } else if (avgMarks >= career.min_marks - 10) {
+    score += 20;
+  } else if (avgMarks >= career.min_marks - 20) {
+    score += 10;
+  }
+
+  const requiredSubjects = career.required_subjects ?? [];
+  if (requiredSubjects.includes("Any subject")) {
+    score += 15;
+  } else if (requiredSubjects.length > 0) {
+    const subjectMatchCount = requiredSubjects.filter((subject) =>
+      subjectMatchesRequired(strong, subject)
+    ).length;
+    score +=
+      (subjectMatchCount / Math.max(requiredSubjects.length, 1)) * 20;
+  }
+
+  if (career.growth_trend === "Rising") {
+    score += 10;
+  } else if (career.growth_trend === "Stable") {
+    score += 5;
+  }
+
+  const reasoning = buildReasoning(career, clusterScores, avgMarks);
+
+  return {
+    match_score: Math.min(Math.round(score), 100),
+    reasoning,
+  };
 }
 
 export function getQuestions(): CareerQuestion[] {
   return CAREER_QUESTIONS;
 }
 
-export function calculateHollandScores(
-  answers: AnswerInput[]
-): Record<string, number> {
-  const scores: Record<string, number> = Object.fromEntries(
-    HOLLAND_TYPES.map((type) => [type, 0])
-  );
-
-  for (const answer of answers) {
-    for (const [holland, questionNumbers] of Object.entries(
-      HOLLAND_QUESTION_MAP
-    )) {
-      if (!questionNumbers.includes(answer.question_number)) continue;
-
-      const question = CAREER_QUESTIONS.find(
-        (q) => q.id === answer.question_number
-      );
-      if (!question) continue;
-
-      scores[holland] += optionPoints(question, answer.selected_option);
-    }
-  }
-
-  return scores;
-}
-
-function subjectPercentages(
-  marks: StudentMark[]
-): Map<string, number> {
-  const totals = new Map<string, { earned: number; possible: number }>();
-
-  for (const mark of marks) {
-    const key = mark.subject.trim();
-    const existing = totals.get(key) ?? { earned: 0, possible: 0 };
-    existing.earned += mark.marks;
-    existing.possible += mark.total_marks;
-    totals.set(key, existing);
-  }
-
-  const percentages = new Map<string, number>();
-  for (const [subject, { earned, possible }] of totals) {
-    percentages.set(
-      subject,
-      possible > 0 ? Math.round((earned / possible) * 100) : 0
-    );
-  }
-
-  return percentages;
-}
-
-function averagePercentage(marks: StudentMark[]): number {
-  if (marks.length === 0) return 0;
-
-  const totalEarned = marks.reduce((sum, m) => sum + m.marks, 0);
-  const totalPossible = marks.reduce((sum, m) => sum + m.total_marks, 0);
-
-  return totalPossible > 0
-    ? Math.round((totalEarned / totalPossible) * 100)
-    : 0;
-}
-
-function subjectMatches(
-  subjectPercentages: Map<string, number>,
-  requiredSubject: string,
-  minMarks: number
-): boolean {
-  const normalizedRequired = requiredSubject.trim().toLowerCase();
-
-  for (const [subject, pct] of subjectPercentages) {
-    if (
-      subject.toLowerCase().includes(normalizedRequired) ||
-      normalizedRequired.includes(subject.toLowerCase())
-    ) {
-      return pct >= minMarks;
-    }
-  }
-
-  return false;
-}
-
-function buildReasoning(
-  career: Career,
-  hollandScores: Record<string, number>,
-  avgPct: number,
-  requiredMet: number,
-  requiredTotal: number,
-  marksCount: number
-): string {
-  const careerCluster = normalizeCluster(career.cluster);
-  const clusterScore = hollandScores[careerCluster] ?? 0;
-  const topCluster = Object.entries(hollandScores).sort(
-    (a, b) => b[1] - a[1]
-  )[0]?.[0];
-
-  const parts: string[] = [];
-
-  if (clusterScore > 0) {
-    parts.push(
-      `Your ${careerCluster} interest profile aligns with this career path.`
-    );
-  } else if (topCluster) {
-    parts.push(
-      `Based on your ${topCluster} strengths, this career offers a complementary fit.`
-    );
-  }
-
-  if (marksCount === 0) {
-    parts.push(
-      "Add your marks to improve match accuracy for subject requirements."
-    );
-  } else if (avgPct >= career.min_marks) {
-    parts.push(
-      `Your overall marks (${avgPct}%) meet the minimum requirement of ${career.min_marks}%.`
-    );
-  } else {
-    parts.push(
-      `Your overall marks (${avgPct}%) are below the ${career.min_marks}% threshold but this career remains a stretch goal.`
-    );
-  }
-
-  if (requiredTotal > 0) {
-    parts.push(`Required subjects met: ${requiredMet}/${requiredTotal}.`);
-  }
-
-  return parts.join(" ");
-}
-
-function calculateMatchScore(
-  career: Career,
-  hollandScores: Record<string, number>,
-  studentMarks: StudentMark[]
-): { score: number; reasoning: string } {
-  const careerCluster = normalizeCluster(career.cluster);
-  const maxHolland = Math.max(...Object.values(hollandScores), 1);
-  const clusterScore = hollandScores[careerCluster] ?? 0;
-  const clusterPoints = (clusterScore / maxHolland) * 40;
-
-  const avgPct = averagePercentage(studentMarks);
-  const marksPoints =
-    avgPct >= career.min_marks
-      ? 30
-      : career.min_marks > 0
-        ? Math.min(30, (avgPct / career.min_marks) * 30)
-        : 30;
-
-  const required = career.required_subjects ?? [];
-  const subjectPct = subjectPercentages(studentMarks);
-  let requiredMet = 0;
-
-  if (required.length === 0) {
-    requiredMet = 0;
-  } else {
-    for (const subj of required) {
-      if (subjectMatches(subjectPct, subj, career.min_marks)) {
-        requiredMet++;
-      }
-    }
-  }
-
-  const requiredPoints =
-    required.length === 0 ? 30 : (requiredMet / required.length) * 30;
-
-  const score = Math.round(
-    Math.min(100, clusterPoints + marksPoints + requiredPoints)
-  );
-
-  const reasoning = buildReasoning(
-    career,
-    hollandScores,
-    avgPct,
-    requiredMet,
-    required.length,
-    studentMarks.length
-  );
-
-  return { score, reasoning };
-}
-
 export function matchCareersToStudent(
   answers: AnswerInput[],
   careers: Career[],
-  studentMarks: StudentMark[]
+  studentMarks: StudentMark[],
+  assessment?: TeacherAssessment | null
 ): CareerMatchResult[] {
-  const hollandScores = calculateHollandScores(answers);
+  const responses = answers.map((answer) => ({
+    question_number: answer.question_number,
+    selected_option: answer.selected_option,
+  }));
+
+  let clusterScores = calculateClusterScores(responses);
+  clusterScores = applyTeacherBonus(clusterScores, assessment);
+
+  const avgMarks = averageMarks(studentMarks);
+  const strong = strongSubjects(studentMarks);
 
   const scored = careers.map((career) => {
-    const { score, reasoning } = calculateMatchScore(
+    const { match_score, reasoning } = scoreCareer(
       career,
-      hollandScores,
-      studentMarks
+      clusterScores,
+      avgMarks,
+      strong
     );
-    return { career, match_score: score, reasoning };
+    return { career, match_score, reasoning };
   });
 
   scored.sort((a, b) => b.match_score - a.match_score);

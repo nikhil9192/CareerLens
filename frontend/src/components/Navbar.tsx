@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: "🏠" },
   { to: "/marks", label: "Enter Marks", icon: "📝" },
   { to: "/career-quiz", label: "Career Quiz", icon: "🎯" },
+  { to: "/ai-chat", label: "AI Counsellor", icon: "🧠" },
 ];
 
 function desktopLinkClass(isActive: boolean): string {

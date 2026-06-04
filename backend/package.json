@@ -19,6 +19,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@sparticuz/chromium": "^149.0.0",
     "@supabase/supabase-js": "^2.49.1",
     "bcryptjs": "^3.0.3",

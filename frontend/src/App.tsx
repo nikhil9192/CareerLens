@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import CareerQuiz from "./pages/CareerQuiz";
 import CareerResults from "./pages/CareerResults";
 import Profile from "./pages/Profile";
+import AiChat from "./pages/AiChat";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
@@ -24,14 +25,21 @@ const queryClient = new QueryClient({
 });
 
 function AppLayout() {
-  useLocation(); // re-render on navigation so Navbar updates after login
+  const location = useLocation();
   const loggedIn = isAuthenticated();
+  const isAiChat = location.pathname === "/ai-chat";
 
   return (
     <>
       <Navbar />
       <BottomNav />
-      <div className={loggedIn ? "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0" : undefined}>
+      <div
+        className={
+          loggedIn && !isAiChat
+            ? "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
+            : undefined
+        }
+      >
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/register" element={<Register />} />
@@ -42,6 +50,7 @@ function AppLayout() {
             <Route path="/marks" element={<MarksEntry />} />
             <Route path="/career-quiz" element={<CareerQuiz />} />
             <Route path="/career-results" element={<CareerResults />} />
+            <Route path="/ai-chat" element={<AiChat />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>

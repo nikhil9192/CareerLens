@@ -73,11 +73,21 @@ export async function apiGet(path: string): Promise<unknown> {
 }
 
 export async function apiPost(path: string, body: object): Promise<unknown> {
-  const res = await fetch(`${getBaseUrl()}${path}`, {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${getBaseUrl()}${path}`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw {
+      response: {
+        data: { error: "Please check your connection" },
+        status: 0,
+      },
+    };
+  }
   return handleResponse(res);
 }
 

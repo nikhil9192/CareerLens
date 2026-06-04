@@ -5,6 +5,7 @@ const BOTTOM_ITEMS = [
   { to: "/dashboard", label: "Home", icon: "🏠" },
   { to: "/marks", label: "Marks", icon: "📝" },
   { to: "/career-quiz", label: "Quiz", icon: "🎯" },
+  { to: "/ai-chat", label: "AI", icon: "🧠" },
   { to: "/profile", label: "Profile", icon: "👤" },
 ];
 

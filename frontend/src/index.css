@@ -203,3 +203,28 @@ video {
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
+
+@keyframes bounce-dot {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: bounce-dot 1.4s infinite ease-in-out;
+}
+
+.typing-dot-delay-1 {
+  animation-delay: 0.16s;
+}
+
+.typing-dot-delay-2 {
+  animation-delay: 0.32s;
+}

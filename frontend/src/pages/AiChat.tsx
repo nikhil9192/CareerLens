@@ -54,10 +54,21 @@ function getErrorMessage(err: unknown): { text: string; type: "rate" | "network"
       type: "rate",
     };
   }
+  if (status === 503) {
+    return {
+      text:
+        errorText ||
+        "AI service is temporarily busy. Please wait 30 seconds and try again.",
+      type: "api",
+    };
+  }
   if (errorText) {
     return { text: errorText, type: "api" };
   }
-  return { text: "AI is busy. Please try again in a moment.", type: "api" };
+  return {
+    text: "Could not get an AI response. Please try again in a moment.",
+    type: "api",
+  };
 }
 
 function TypingIndicator() {

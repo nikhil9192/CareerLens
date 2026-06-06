@@ -5,11 +5,65 @@ import { AppError } from "../lib/errors";
 const DAILY_MESSAGE_LIMIT = 20;
 const HISTORY_LIMIT = 10;
 
-const GEMINI_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash",
-] as const;
+// Free-tier keys work with 2.5 models; 2.0 models often return 429 (quota 0).
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-flash-latest"] as const;
+const GEMINI_RETRY_DELAY_MS = 2000;
+const GEMINI_MAX_ATTEMPTS = 2;
+
+function getErrorDetail(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
+function isModelNotFoundError(detail: string): boolean {
+  const lower = detail.toLowerCase();
+  return lower.includes("404") || lower.includes("not found");
+}
+
+function isRetryableGeminiError(detail: string): boolean {
+  const lower = detail.toLowerCase();
+  return (
+    lower.includes("429") ||
+    lower.includes("503") ||
+    lower.includes("resource exhausted") ||
+    lower.includes("overloaded")
+  );
+}
+
+function mapGeminiFailureToAppError(detail: string): AppError {
+  const lower = detail.toLowerCase();
+
+  if (lower.includes("api key") || lower.includes("api_key")) {
+    return new AppError(
+      "Invalid GEMINI_API_KEY. Get a free key from aistudio.google.com",
+      500
+    );
+  }
+  if (
+    lower.includes("429") ||
+    lower.includes("resource exhausted") ||
+    lower.includes("quota")
+  ) {
+    return new AppError(
+      "AI service is temporarily busy. Please wait 30 seconds and try again.",
+      503
+    );
+  }
+  if (lower.includes("timeout") || lower.includes("fetch failed")) {
+    return new AppError(
+      "Connection to AI timed out. Please check your network and try again.",
+      503
+    );
+  }
+  return new AppError(
+    "Could not get an AI response right now. Please try again in a moment.",
+    503
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function isMissingTableError(message: string): boolean {
   const lower = message.toLowerCase();
@@ -111,29 +165,48 @@ async function callGemini(
   let lastError: unknown;
 
   for (const modelName of GEMINI_MODELS) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: systemPrompt,
-      });
+    for (let attempt = 0; attempt < GEMINI_MAX_ATTEMPTS; attempt++) {
+      try {
+        if (attempt > 0) {
+          await sleep(GEMINI_RETRY_DELAY_MS);
+        }
 
-      const chat = model.startChat({ history: conversationHistory });
-      const result = await chat.sendMessage(message);
-      const text = result.response.text();
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          systemInstruction: systemPrompt,
+        });
 
-      if (!text?.trim()) {
-        throw new Error("Empty response from Gemini");
+        const chat = model.startChat({ history: conversationHistory });
+        const result = await chat.sendMessage(message);
+        const text = result.response.text();
+
+        if (!text?.trim()) {
+          throw new Error("Empty response from Gemini");
+        }
+
+        console.info(
+          `[ai] Response generated with model: ${modelName} (attempt ${attempt + 1})`
+        );
+        return text;
+      } catch (err) {
+        lastError = err;
+        const detail = getErrorDetail(err);
+        console.error(
+          `[ai] Model ${modelName} attempt ${attempt + 1} failed:`,
+          detail
+        );
+
+        if (isModelNotFoundError(detail)) {
+          break;
+        }
+        if (!isRetryableGeminiError(detail) || attempt === GEMINI_MAX_ATTEMPTS - 1) {
+          break;
+        }
       }
-
-      console.info(`[ai] Response generated with model: ${modelName}`);
-      return text;
-    } catch (err) {
-      lastError = err;
-      console.error(`[ai] Model ${modelName} failed:`, err);
     }
   }
 
-  throw lastError ?? new Error("All Gemini models failed");
+  throw mapGeminiFailureToAppError(getErrorDetail(lastError));
 }
 
 async function fetchStudentContext(studentId: string) {
@@ -398,17 +471,8 @@ export async function handleChat(
   } catch (err) {
     if (err instanceof AppError) throw err;
 
-    const detail = err instanceof Error ? err.message : String(err);
-    console.error("[ai] Gemini API error:", detail);
-
-    if (detail.toLowerCase().includes("api key")) {
-      throw new AppError(
-        "Invalid GEMINI_API_KEY. Get a free key from aistudio.google.com",
-        500
-      );
-    }
-
-    throw new AppError("AI is busy, please try again", 500);
+    console.error("[ai] Unexpected chat error:", getErrorDetail(err));
+    throw mapGeminiFailureToAppError(getErrorDetail(err));
   }
 }
 

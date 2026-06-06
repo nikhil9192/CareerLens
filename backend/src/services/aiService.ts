@@ -61,6 +61,44 @@ function mapGeminiFailureToAppError(detail: string): AppError {
   );
 }
 
+function buildGeminiHistory(
+  rows: HistoryRow[]
+): { role: "user" | "model"; parts: { text: string }[] }[] {
+  const chronological = [...rows]
+    .sort((a, b) => {
+      const aTime = a.created_at ? Date.parse(a.created_at) : 0;
+      const bTime = b.created_at ? Date.parse(b.created_at) : 0;
+      if (aTime !== bTime) return aTime - bTime;
+      if (a.role === b.role) return 0;
+      return a.role === "user" ? -1 : 1;
+    })
+    .map((entry) => ({
+      role: entry.role === "user" ? ("user" as const) : ("model" as const),
+      parts: [{ text: entry.message }],
+    }));
+
+  // Gemini requires history to start with "user" and alternate user/model.
+  let start = 0;
+  while (start < chronological.length && chronological[start].role === "model") {
+    start++;
+  }
+
+  const normalized: typeof chronological = [];
+  for (const entry of chronological.slice(start)) {
+    const last = normalized[normalized.length - 1];
+    if (last && last.role === entry.role) {
+      continue;
+    }
+    normalized.push(entry);
+  }
+
+  if (normalized.length > 0 && normalized[normalized.length - 1].role === "user") {
+    normalized.pop();
+  }
+
+  return normalized;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -247,7 +285,7 @@ async function fetchStudentContext(studentId: string) {
 
       supabase
         .from("ai_conversations")
-        .select("role, message")
+        .select("role, message, created_at")
         .eq("student_id", studentId)
         .order("created_at", { ascending: false })
         .limit(HISTORY_LIMIT),
@@ -435,12 +473,7 @@ export async function handleChat(
     context.quiz as { question_number: number; selected_option: string; cluster_tag: string }[]
   );
 
-  const conversationHistory = [...context.history]
-    .reverse()
-    .map((entry) => ({
-      role: entry.role === "user" ? ("user" as const) : ("model" as const),
-      parts: [{ text: entry.message }],
-    }));
+  const conversationHistory = buildGeminiHistory(context.history);
 
   try {
     const aiResponse = await callGemini(
@@ -449,11 +482,22 @@ export async function handleChat(
       trimmed
     );
 
+    const savedAt = Date.now();
     const { error: insertError } = await supabase
       .from("ai_conversations")
       .insert([
-        { student_id: studentId, role: "user", message: trimmed },
-        { student_id: studentId, role: "assistant", message: aiResponse },
+        {
+          student_id: studentId,
+          role: "user",
+          message: trimmed,
+          created_at: new Date(savedAt).toISOString(),
+        },
+        {
+          student_id: studentId,
+          role: "assistant",
+          message: aiResponse,
+          created_at: new Date(savedAt + 1).toISOString(),
+        },
       ]);
 
     if (insertError) {

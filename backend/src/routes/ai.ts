@@ -7,6 +7,7 @@ const router = Router();
 router.use(authMiddleware);
 
 router.post("/chat", aiController.chat);
+router.post("/voice", aiController.voice);
 router.get("/history", aiController.history);
 router.delete("/clear", aiController.clearHistory);
 router.get("/suggestions", aiController.suggestions);

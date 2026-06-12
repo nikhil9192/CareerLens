@@ -43,7 +43,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+// 15mb limit so base64 voice recordings (up to ~10MB audio) fit in JSON bodies
+app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/health", (_req, res) => {

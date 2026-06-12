@@ -20,6 +20,20 @@ export async function sendAiMessage(message: string): Promise<AiChatResponse> {
   return (await apiPost("/api/ai/chat", { message })) as AiChatResponse;
 }
 
+export interface AiVoiceResponse extends AiChatResponse {
+  transcript: string;
+}
+
+export async function sendAiVoice(
+  audioBase64: string,
+  mimeType: string
+): Promise<AiVoiceResponse> {
+  return (await apiPost("/api/ai/voice", {
+    audio: audioBase64,
+    mimeType,
+  })) as AiVoiceResponse;
+}
+
 export async function clearAiHistory(): Promise<void> {
   await apiDelete("/api/ai/clear");
 }

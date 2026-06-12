@@ -3,6 +3,7 @@ import { AuthRequest } from "../middleware/auth";
 import { AppError } from "../lib/errors";
 import {
   handleChat,
+  handleVoiceChat,
   getChatHistory,
   clearChatHistory,
   getSuggestions,
@@ -30,6 +31,32 @@ export async function chat(
     }
 
     const result = await handleChat(studentId, message);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function voice(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const studentId = getStudentId(req);
+    const { audio, mimeType } = req.body as {
+      audio?: unknown;
+      mimeType?: unknown;
+    };
+
+    if (typeof audio !== "string" || !audio.trim()) {
+      throw new AppError("Audio data is required", 400);
+    }
+    if (typeof mimeType !== "string" || !mimeType.startsWith("audio/")) {
+      throw new AppError("A valid audio mimeType is required", 400);
+    }
+
+    const result = await handleVoiceChat(studentId, audio, mimeType);
     res.json(result);
   } catch (err) {
     next(err);

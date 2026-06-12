@@ -520,6 +520,101 @@ export async function handleChat(
   }
 }
 
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+
+const SUPPORTED_AUDIO_MIME_TYPES = [
+  "audio/webm",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/mp3",
+  "audio/wav",
+  "audio/ogg",
+  "audio/aac",
+  "audio/flac",
+];
+
+const TRANSCRIBE_PROMPT =
+  "Transcribe this audio exactly as spoken. The speaker is an Indian student " +
+  "and may speak Hindi, English, or Hinglish (mix of both). " +
+  "Return ONLY the transcribed words with no extra commentary. " +
+  "If there is no clear speech in the audio, return exactly: [NO_SPEECH]";
+
+async function transcribeAudio(
+  audioBase64: string,
+  mimeType: string
+): Promise<string> {
+  const genAI = getGeminiClient();
+  let lastError: unknown;
+
+  for (const modelName of GEMINI_MODELS) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent([
+        { inlineData: { data: audioBase64, mimeType } },
+        { text: TRANSCRIBE_PROMPT },
+      ]);
+      const text = result.response.text().trim();
+
+      console.info(`[ai] Audio transcribed with model: ${modelName}`);
+      return text;
+    } catch (err) {
+      lastError = err;
+      console.error(
+        `[ai] Transcription with ${modelName} failed:`,
+        getErrorDetail(err)
+      );
+    }
+  }
+
+  throw mapGeminiFailureToAppError(getErrorDetail(lastError));
+}
+
+export async function handleVoiceChat(
+  studentId: string,
+  audioBase64: string,
+  mimeType: string
+): Promise<{ transcript: string; response: string; studentName: string }> {
+  // MediaRecorder sends types like "audio/webm;codecs=opus" — keep only the base type
+  const baseMimeType = mimeType.split(";")[0].trim().toLowerCase();
+  if (!SUPPORTED_AUDIO_MIME_TYPES.includes(baseMimeType)) {
+    throw new AppError(
+      "Unsupported audio format. Please try recording again.",
+      400
+    );
+  }
+
+  const approxBytes = Math.floor((audioBase64.length * 3) / 4);
+  if (approxBytes > MAX_AUDIO_BYTES) {
+    throw new AppError(
+      "Audio is too long. Please keep your question under 1 minute.",
+      400
+    );
+  }
+  if (approxBytes < 1000) {
+    throw new AppError(
+      "Recording was too short. Hold the mic and speak your question.",
+      400
+    );
+  }
+
+  const transcript = await transcribeAudio(audioBase64, baseMimeType);
+
+  if (!transcript || transcript.includes("[NO_SPEECH]")) {
+    throw new AppError(
+      "Could not hear anything clearly. Please speak again near the mic.",
+      400
+    );
+  }
+
+  const chatResult = await handleChat(studentId, transcript);
+
+  return {
+    transcript,
+    response: chatResult.response,
+    studentName: chatResult.studentName,
+  };
+}
+
 export async function getChatHistory(studentId: string): Promise<HistoryRow[]> {
   const { data, error } = await supabase
     .from("ai_conversations")

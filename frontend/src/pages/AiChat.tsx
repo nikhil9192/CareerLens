@@ -4,12 +4,41 @@ import {
   fetchAiHistory,
   fetchAiSuggestions,
   sendAiMessage,
+  sendAiVoice,
   type AiChatMessage,
 } from "../services/ai.api";
 import { getStudentName } from "../services/auth";
 
 const MAX_CHARS = 500;
 const COUNTER_THRESHOLD = 400;
+const MAX_RECORDING_SECONDS = 60;
+
+function pickRecorderMimeType(): string {
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4",
+    "audio/ogg",
+  ];
+  for (const type of candidates) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      return type;
+    }
+  }
+  return "";
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
 
 function getInitials(name: string): string {
   return name
@@ -159,9 +188,15 @@ export default function AiChat() {
   const [sending, setSending] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordTimerRef = useRef<number | null>(null);
+  const cancelRecordingRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -251,6 +286,124 @@ export default function AiChat() {
       handleSend(input);
     }
   }
+
+  function stopRecordTimer() {
+    if (recordTimerRef.current !== null) {
+      window.clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    setRecordSeconds(0);
+  }
+
+  async function sendVoiceMessage(audioBlob: Blob, mimeType: string) {
+    setErrorBanner(null);
+    setShowWelcome(false);
+    setSending(true);
+
+    try {
+      const audioBase64 = await blobToBase64(audioBlob);
+      const result = await sendAiVoice(audioBase64, mimeType);
+
+      const userMsg: AiChatMessage = {
+        role: "user",
+        message: result.transcript,
+        created_at: new Date().toISOString(),
+      };
+      const aiMsg: AiChatMessage = {
+        role: "assistant",
+        message: result.response,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMsg, aiMsg]);
+    } catch (err) {
+      const { text: errText } = getErrorMessage(err);
+      setErrorBanner(errText);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function startRecording() {
+    if (sending || recording) return;
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setErrorBanner("Voice input is not supported in this browser.");
+      return;
+    }
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setErrorBanner("Microphone permission denied. Allow mic access and try again.");
+      return;
+    }
+
+    const mimeType = pickRecorderMimeType();
+    const recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+
+    audioChunksRef.current = [];
+    cancelRecordingRef.current = false;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) {
+        audioChunksRef.current.push(e.data);
+      }
+    };
+
+    recorder.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      setRecording(false);
+      stopRecordTimer();
+
+      if (cancelRecordingRef.current) return;
+
+      const type = recorder.mimeType || mimeType || "audio/webm";
+      const blob = new Blob(audioChunksRef.current, { type });
+      if (blob.size < 1000) {
+        setErrorBanner("Recording was too short. Tap the mic and speak your question.");
+        return;
+      }
+      void sendVoiceMessage(blob, type);
+    };
+
+    mediaRecorderRef.current = recorder;
+    recorder.start();
+    setRecording(true);
+    setErrorBanner(null);
+    setRecordSeconds(0);
+
+    recordTimerRef.current = window.setInterval(() => {
+      setRecordSeconds((prev) => {
+        if (prev + 1 >= MAX_RECORDING_SECONDS) {
+          mediaRecorderRef.current?.stop();
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+  }
+
+  function cancelRecording() {
+    cancelRecordingRef.current = true;
+    mediaRecorderRef.current?.stop();
+  }
+
+  useEffect(() => {
+    return () => {
+      cancelRecordingRef.current = true;
+      mediaRecorderRef.current?.stop();
+      if (recordTimerRef.current !== null) {
+        window.clearInterval(recordTimerRef.current);
+      }
+    };
+  }, []);
 
   async function handleClearChat() {
     setShowClearConfirm(false);
@@ -381,50 +534,115 @@ export default function AiChat() {
           borderColor: "var(--border)",
         }}
       >
-        {charCount > COUNTER_THRESHOLD && (
+        {charCount > COUNTER_THRESHOLD && !recording && (
           <p className="mb-1 text-right text-xs text-[var(--text-secondary)]">
             {charCount}/{MAX_CHARS}
           </p>
         )}
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => {
-              if (e.target.value.length <= MAX_CHARS) {
-                setInput(e.target.value);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            disabled={sending}
-            placeholder="Apna sawaal likho..."
-            rows={1}
-            className="input-dark max-h-32 min-h-[44px] flex-1 resize-none py-2.5 text-sm disabled:opacity-60"
-          />
-          <button
-            type="button"
-            onClick={() => handleSend(input)}
-            disabled={sending || !input.trim()}
-            className="btn-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-xl p-0 disabled:opacity-50"
-            aria-label="Send message"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
+        {recording ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition hover:bg-[var(--bg-card-hover)]"
             >
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </div>
+              Cancel
+            </button>
+            <div className="flex flex-1 items-center justify-center gap-2">
+              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[var(--error)]" />
+              <span className="text-sm font-semibold text-[var(--text-primary)]">
+                Recording... {recordSeconds}s
+              </span>
+              <span className="text-xs text-[var(--text-secondary)]">
+                / {MAX_RECORDING_SECONDS}s
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={stopRecording}
+              className="btn-primary flex h-11 items-center justify-center gap-2 rounded-xl px-4"
+              aria-label="Stop and send voice message"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              <span className="text-sm font-semibold">Send</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                if (e.target.value.length <= MAX_CHARS) {
+                  setInput(e.target.value);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={sending}
+              placeholder="Apna sawaal likho ya mic dabao..."
+              rows={1}
+              className="input-dark max-h-32 min-h-[44px] flex-1 resize-none py-2.5 text-sm disabled:opacity-60"
+            />
+            <button
+              type="button"
+              onClick={startRecording}
+              disabled={sending}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] text-[var(--accent-cyan)] transition hover:bg-[var(--bg-card-hover)] disabled:opacity-50"
+              aria-label="Record voice message"
+              title="Speak your question"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSend(input)}
+              disabled={sending || !input.trim()}
+              className="btn-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-xl p-0 disabled:opacity-50"
+              aria-label="Send message"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Clear confirmation */}

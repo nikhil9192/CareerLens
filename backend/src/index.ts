@@ -17,6 +17,8 @@ const PORT = Number(process.env.PORT) || 8000;
 
 const productionOrigins = [
   "https://career-lens-ivory.vercel.app",
+  "https://vidyalens.in",
+  "https://www.vidyalens.in",
   process.env.FRONTEND_URL,
 ].filter(Boolean) as string[];
 

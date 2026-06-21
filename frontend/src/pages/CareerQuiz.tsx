@@ -219,25 +219,39 @@ export default function CareerQuiz() {
                   </span>
                 </div>
 
-                <p className="mb-3 text-sm font-medium text-[var(--color-text)] md:mb-4 md:text-base">
-                  {question.text}
-                </p>
+                <div className="mb-3 md:mb-4">
+                  <p className="text-sm font-medium text-[var(--color-text)] md:text-base">
+                    {question.text_hi}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                    {question.text}
+                  </p>
+                </div>
 
                 <div className="space-y-2">
                   {question.options.map((option) => {
-                    const selected = answers[question.id] === option;
+                    const selected = answers[question.id] === option.text;
                     return (
                       <button
-                        key={option}
+                        key={option.text}
                         type="button"
-                        onClick={() => selectOption(question.id, option)}
+                        onClick={() => selectOption(question.id, option.text)}
                         className={`w-full rounded-xl border px-3 py-2.5 text-left text-xs transition md:px-4 md:py-3 md:text-sm ${
                           selected
                             ? "border-[var(--accent-cyan)] bg-[rgba(0,212,255,0.12)] font-medium text-[var(--accent-cyan)]"
                             : "border-[var(--color-border)] bg-[var(--input-bg)] text-[var(--color-text)] hover:border-[var(--accent-cyan)] hover:bg-[rgba(0,212,255,0.06)]"
                         }`}
                       >
-                        {option}
+                        <span className="block">{option.text_hi}</span>
+                        <span
+                          className={`mt-0.5 block text-[10px] md:text-xs ${
+                            selected
+                              ? "text-[var(--accent-cyan)]"
+                              : "text-[var(--color-text-muted)]"
+                          }`}
+                        >
+                          {option.text}
+                        </span>
                       </button>
                     );
                   })}

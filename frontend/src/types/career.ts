@@ -1,9 +1,15 @@
+export interface QuizOption {
+  text: string;
+  text_hi: string;
+}
+
 export interface CareerQuestion {
   id: number;
   text: string;
+  text_hi: string;
   category: string;
   cluster_tag: string;
-  options: string[];
+  options: QuizOption[];
 }
 
 export interface CareerAnswer {

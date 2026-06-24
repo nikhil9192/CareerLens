@@ -1,4 +1,6 @@
 import { type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { BrainCircuit, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import GPACard from "../components/analytics/GPACard";
 import SubjectBarChart from "../components/analytics/SubjectBarChart";
@@ -115,6 +117,32 @@ export default function Dashboard() {
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 py-6 md:px-8 md:py-8 lg:px-16">
+        <Link
+          to="/ai-literacy"
+          className="card mb-6 flex items-center gap-4 p-4 md:p-5"
+        >
+          <span
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white"
+            style={{ background: "linear-gradient(135deg, #00d4ff, #7c3aed)" }}
+          >
+            <BrainCircuit size={22} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base font-bold text-[var(--color-text)] md:text-lg">
+              AI Literacy
+            </h2>
+            <p className="mt-0.5 text-xs text-[var(--color-text-muted)] md:text-sm">
+              Learn how AI works — readings, quizzes, and tasks in English &
+              हिंदी.
+            </p>
+          </div>
+          <ArrowRight
+            size={20}
+            className="shrink-0 text-[var(--accent-cyan)]"
+            aria-hidden="true"
+          />
+        </Link>
+
         {(summaryQuery.isLoading || rankingQuery.isLoading) && (
           <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (

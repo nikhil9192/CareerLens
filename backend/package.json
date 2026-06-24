@@ -10,7 +10,8 @@
     "dev": "tsx watch src/index.ts",
     "prestart": "node scripts/free-port.js",
     "translate:hindi": "tsx scripts/translateToHindi.ts",
-    "generate:hindi-questions": "tsx scripts/generateHindiQuestions.ts"
+    "generate:hindi-questions": "tsx scripts/generateHindiQuestions.ts",
+    "seed:ai-literacy": "tsx src/scripts/seedAiLiteracy.ts"
   },
   "keywords": [
     "careerlens",

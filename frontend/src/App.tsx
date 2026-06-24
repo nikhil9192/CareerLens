@@ -10,6 +10,14 @@ import CareerQuiz from "./pages/CareerQuiz";
 import CareerResults from "./pages/CareerResults";
 import Profile from "./pages/Profile";
 import AiChat from "./pages/AiChat";
+import AiLiteracyHome from "./pages/AiLiteracyHome";
+import AiLiteracyLevel from "./pages/AiLiteracyLevel";
+import AiLiteracyContent from "./pages/AiLiteracyContent";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminAiLiteracy from "./pages/admin/AdminAiLiteracy";
+import AdminLevelEditor from "./pages/admin/AdminLevelEditor";
+import AdminContentEditor from "./pages/admin/AdminContentEditor";
+import AdminProgress from "./pages/admin/AdminProgress";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
@@ -51,7 +59,26 @@ function AppLayout() {
             <Route path="/career-quiz" element={<CareerQuiz />} />
             <Route path="/career-results" element={<CareerResults />} />
             <Route path="/ai-chat" element={<AiChat />} />
+            <Route path="/ai-literacy" element={<AiLiteracyHome />} />
+            <Route
+              path="/ai-literacy/level/:levelId"
+              element={<AiLiteracyLevel />}
+            />
+            <Route
+              path="/ai-literacy/content/:contentId"
+              element={<AiLiteracyContent />}
+            />
             <Route path="/profile" element={<Profile />} />
+          </Route>
+          <Route path="/admin/ai-literacy" element={<AdminLayout />}>
+            <Route index element={<AdminAiLiteracy />} />
+            <Route path="progress" element={<AdminProgress />} />
+            <Route path="level/:levelId" element={<AdminLevelEditor />} />
+            <Route
+              path="level/:levelId/content/new"
+              element={<AdminContentEditor />}
+            />
+            <Route path="content/:contentId" element={<AdminContentEditor />} />
           </Route>
         </Routes>
       </div>

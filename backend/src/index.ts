@@ -10,6 +10,7 @@ import schoolsRoutes from "./routes/schools";
 import careerRoutes from "./routes/career";
 import reportRoutes from "./routes/report";
 import aiRoutes from "./routes/ai";
+import aiLiteracyRoutes from "./routes/aiLiteracy";
 import { AppError } from "./lib/errors";
 
 const app = express();
@@ -61,6 +62,7 @@ app.use("/api/schools", schoolsRoutes);
 app.use("/api/career", careerRoutes);
 app.use("/api/report", reportRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/ai-literacy", aiLiteracyRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({

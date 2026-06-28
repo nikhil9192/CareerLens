@@ -42,7 +42,8 @@ async function handleResponse(res: Response): Promise<unknown> {
   if (res.status === 401) {
     localStorage.removeItem(TOKEN_KEY);
     if (hadToken) {
-      window.location.href = "/login";
+      const isSchoolRoute = window.location.pathname.startsWith("/school");
+      window.location.href = isSchoolRoute ? "/school/login" : "/login";
     }
   }
 

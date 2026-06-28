@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
@@ -18,10 +18,16 @@ import AdminAiLiteracy from "./pages/admin/AdminAiLiteracy";
 import AdminLevelEditor from "./pages/admin/AdminLevelEditor";
 import AdminContentEditor from "./pages/admin/AdminContentEditor";
 import AdminProgress from "./pages/admin/AdminProgress";
+import SchoolLogin from "./pages/school/SchoolLogin";
+import SchoolLayout from "./pages/school/SchoolLayout";
+import SchoolDashboard from "./pages/school/SchoolDashboard";
+import SchoolProfile from "./pages/school/SchoolProfile";
+import SchoolStudent from "./pages/school/SchoolStudent";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav";
-import { isAuthenticated } from "./services/auth";
+import { isAuthenticated, isSchoolOwner } from "./services/auth";
+// isAuthenticated is used in AppLayout for student nav visibility
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,18 +38,33 @@ const queryClient = new QueryClient({
   },
 });
 
+// Guards school owner routes.
+// Uses isSchoolOwner() which reads from "school_owner_token" — NOT the student
+// "careerlens_token" key.  isAuthenticated() must NOT be used here because it
+// only checks the student token and would always block school owners.
+function SchoolOwnerRoute() {
+  if (!isSchoolOwner()) {
+    return <Navigate to="/school/login" replace />;
+  }
+  return <Outlet />;
+}
+
 function AppLayout() {
   const location = useLocation();
   const loggedIn = isAuthenticated();
   const isAiChat = location.pathname === "/ai-chat";
+  // School and admin routes have their own layout — hide student chrome
+  const isSchoolRoute = location.pathname.startsWith("/school");
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const hideStudentNav = isSchoolRoute || isAdminRoute;
 
   return (
     <>
-      <Navbar />
-      <BottomNav />
+      {!hideStudentNav && <Navbar />}
+      {!hideStudentNav && <BottomNav />}
       <div
         className={
-          loggedIn && !isAiChat
+          !hideStudentNav && loggedIn && !isAiChat
             ? "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
             : undefined
         }
@@ -53,6 +74,8 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/questions" element={<Questions />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Student protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/marks" element={<MarksEntry />} />
@@ -70,6 +93,8 @@ function AppLayout() {
             />
             <Route path="/profile" element={<Profile />} />
           </Route>
+
+          {/* AI Literacy admin routes */}
           <Route path="/admin/ai-literacy" element={<AdminLayout />}>
             <Route index element={<AdminAiLiteracy />} />
             <Route path="progress" element={<AdminProgress />} />
@@ -79,6 +104,16 @@ function AppLayout() {
               element={<AdminContentEditor />}
             />
             <Route path="content/:contentId" element={<AdminContentEditor />} />
+          </Route>
+
+          {/* School owner routes */}
+          <Route path="/school/login" element={<SchoolLogin />} />
+          <Route element={<SchoolOwnerRoute />}>
+            <Route element={<SchoolLayout />}>
+              <Route path="/school/dashboard" element={<SchoolDashboard />} />
+              <Route path="/school/profile" element={<SchoolProfile />} />
+              <Route path="/school/student/:id" element={<SchoolStudent />} />
+            </Route>
           </Route>
         </Routes>
       </div>

@@ -149,6 +149,55 @@ export async function login(
   }
 }
 
+export async function ownerLogin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email, password } = req.body as {
+      email?: string;
+      password?: string;
+    };
+
+    if (!email || !password) {
+      res.status(400).json({ error: "Email and password are required" });
+      return;
+    }
+
+    const { data: teacher, error } = await supabase
+      .from("teachers")
+      .select("id, name, email, password_hash, school_id")
+      .eq("email", email.trim().toLowerCase())
+      .single();
+
+    if (error || !teacher) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    const match = await bcrypt.compare(password, teacher.password_hash);
+    if (!match) {
+      res.status(401).json({ error: "Invalid credentials" });
+      return;
+    }
+
+    const token = signToken(teacher.id, "school_owner", teacher.school_id);
+
+    res.json({
+      token,
+      owner: {
+        id: teacher.id,
+        name: teacher.name,
+        email: teacher.email,
+        school_id: teacher.school_id,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function getMe(
   req: AuthRequest,
   res: Response,
